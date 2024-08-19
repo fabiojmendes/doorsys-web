@@ -1,6 +1,6 @@
 {
   "name": "doorsys-webapp",
-  "version": "0.0.3",
+  "version": "0.0.0-dev",
   "private": true,
   "type": "module",
   "scripts": {
