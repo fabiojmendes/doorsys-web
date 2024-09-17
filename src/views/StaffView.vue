@@ -1,10 +1,11 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import BackButton from '../components/BackButton.vue'
 
 const api = inject('api')
+const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 
@@ -41,6 +42,15 @@ async function updateStatus() {
   if (confirmed) {
     const res = await api.put(`/staff/${staff.value.id}/status`, !staff.value.active)
     staff.value = res.data
+  }
+}
+
+async function deleteStaff() {
+  const confirmed = confirm(`Delete ${staff.value.name}?`)
+  if (confirmed) {
+    const res = await api.delete(`/staff/${staff.value.id}`)
+    toast.success(`${staff.value.name} has been deleted`)
+    router.back()
   }
 }
 </script>
@@ -85,12 +95,13 @@ async function updateStatus() {
         </div>
         <div class="d-inline-flex gap-2">
           <input type="submit" class="btn btn-primary" value="Save" />
-          <button v-if="staff.active" type="button" class="btn btn-danger" @click="updateStatus">
+          <button v-if="staff.active" type="button" class="btn btn-warning" @click="updateStatus">
             Deactivate
           </button>
           <button v-else type="button" class="btn btn-success" @click="updateStatus">
             Activate
           </button>
+          <button class="btn btn-danger" @click.prevent="deleteStaff">Delete</button>
         </div>
       </form>
     </div>

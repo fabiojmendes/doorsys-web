@@ -130,7 +130,12 @@ watch(filter, load, { deep: true })
             <span v-else>None</span>
           </td>
           <td>
-            <RouterLink v-if="e.staffId" :to="`/staff/${e.staffId}`">{{ e.staffName }}</RouterLink>
+            <span v-if="e.staffDeleted" :title="`Deleted on ${e.staffDeleted}`">
+              {{ e.staffName }} [DELETED]
+            </span>
+            <span v-else-if="e.staffId">
+              <RouterLink :to="`/staff/${e.staffId}`">{{ e.staffName }}</RouterLink>
+            </span>
             <span v-else>{{ e.code }}</span>
           </td>
           <td :title="e.eventDate.toLocaleString([], { hour12: false })">
