@@ -89,22 +89,12 @@ watch(filter, load, { deep: true })
 
   <ul class="nav nav-tabs mt-2">
     <li class="nav-item">
-      <a
-        class="nav-link"
-        :class="filter.deviceId == null ? 'active' : ''"
-        href="#"
-        @click="filter.deviceId = null"
-        >All</a
-      >
+      <a class="nav-link" :class="filter.deviceId == null ? 'active' : ''" href="#"
+        @click="filter.deviceId = null">All</a>
     </li>
     <li v-for="d in devices" class="nav-item">
-      <a
-        class="nav-link"
-        :class="d.id == filter.deviceId ? 'active' : ''"
-        href="#"
-        @click="filter.deviceId = d.id"
-        >{{ d.name }}</a
-      >
+      <a class="nav-link" :class="d.id == filter.deviceId ? 'active' : ''" href="#" @click="filter.deviceId = d.id">{{
+        d.name }}</a>
     </li>
   </ul>
 
@@ -150,11 +140,7 @@ watch(filter, load, { deep: true })
           <td class="text-center">
             <i :class="`bi bi-${e.codeTypeLabel}`" :title="`Entry using ${e.codeType}`"></i>
             <i v-if="e.success" title="Successful entry" class="ms-1 bi bi-check-square"></i>
-            <i
-              v-else
-              title="Invalid attempt"
-              class="ms-1 text-danger bi bi-exclamation-octagon"
-            ></i>
+            <i v-else title="Invalid attempt" class="ms-1 text-danger bi bi-exclamation-octagon"></i>
           </td>
         </tr>
       </template>

@@ -26,14 +26,8 @@ async function addStaffMember() {
           <span class="input-group-text">
             <i class="bi bi-person"></i>
           </span>
-          <input
-            v-model="newStaff.name"
-            ref="formName"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Name"
-            required="true"
-          />
+          <input v-model="newStaff.name" ref="formName" type="text" class="form-control form-control-sm"
+            placeholder="Name" required="true" />
         </div>
       </div>
       <div class="row g-3 mb-3">
@@ -41,25 +35,15 @@ async function addStaffMember() {
           <span class="input-group-text">
             <i class="bi bi-telephone"></i>
           </span>
-          <input
-            v-model="newStaff.phone"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Phone"
-            required="true"
-          />
+          <input v-model="newStaff.phone" type="text" class="form-control form-control-sm" placeholder="Phone"
+            required="true" />
         </div>
         <div class="col input-group input-group-sm">
           <span class="input-group-text">
             <i class="bi bi-tag" title="Staff has fob"></i>
           </span>
-          <input
-            v-model="newStaff.fob"
-            type="number"
-            max="16777216"
-            class="form-control form-control-sm"
-            placeholder="Fob (Optional)"
-          />
+          <input v-model="newStaff.fob" type="number" max="16777216" class="form-control form-control-sm"
+            placeholder="Fob (Optional)" />
         </div>
       </div>
       <div class="text-end">

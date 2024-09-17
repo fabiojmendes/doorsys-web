@@ -5,12 +5,7 @@ import { RouterLink } from 'vue-router'
 <template>
   <nav class="navbar navbar-expand-sm bg-dark" data-bs-theme="dark">
     <div class="container main-container">
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#main-menu"
-      >
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="main-menu">
