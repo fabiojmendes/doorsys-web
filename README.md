@@ -1,8 +1,14 @@
+---
+vim: tw=80
+---
+
 # Doorsys Web
 
-Administration console for the doorsys platform
+Administration console for the Doorsys platform. It provides an interface where
+you can add and remove users, generate new pins, deactivate accounts or check
+the audit logs.
 
-![screen](./screen.png)
+![Screen capture](./screen.png)
 
 ## Project Setup
 
