@@ -1,8 +1,8 @@
 <script setup>
 import { computed, inject, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import StaffList from '@/components/StaffList.vue'
 import BackButton from '@/components/BackButton.vue'
+import StaffList from '@/components/StaffList.vue'
 
 const api = inject('api')
 const route = useRoute()
@@ -101,12 +101,7 @@ async function updateStatus() {
         </div>
         <div class="d-inline-flex gap-2">
           <button type="button" class="btn btn-primary" @click="toggleEdit">Edit</button>
-          <button
-            v-if="customer.active"
-            type="button"
-            class="btn btn-warning"
-            @click="updateStatus"
-          >
+          <button v-if="customer.active" type="button" class="btn btn-warning" @click="updateStatus">
             Deactivate
           </button>
           <button v-else type="button" class="btn btn-success" @click="updateStatus">

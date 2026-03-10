@@ -1,5 +1,5 @@
 <script setup>
-import { watch, inject, onMounted, ref } from 'vue'
+import { inject, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

@@ -1,7 +1,7 @@
 <script setup>
-import { inject } from 'vue'
+import { inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { decodeCredential } from 'vue3-google-login'
+import { decodeCredential, googleOneTap } from 'vue3-google-login'
 
 const user = inject('user')
 const router = useRouter()
@@ -14,6 +14,14 @@ const callback = (response) => {
   localStorage.setItem('user', JSON.stringify(userData))
   router.push('/')
 }
+
+onMounted(() => {
+  googleOneTap({ cancelOnTapOutside: false, autoLogin: true })
+    .then(callback)
+    .catch((error) => {
+      console.log('Handle the error', error)
+    })
+})
 </script>
 
 <template>
@@ -26,7 +34,7 @@ const callback = (response) => {
             Please sign in with your Google account to access the system
           </p>
           <div class="d-flex justify-content-center">
-            <GoogleLogin :callback="callback" prompt auto-login />
+            <GoogleLogin :callback="callback" />
           </div>
         </div>
       </div>

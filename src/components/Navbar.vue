@@ -19,12 +19,7 @@ const logout = () => {
   <nav class="navbar navbar-expand-sm bg-dark mb-4" data-bs-theme="dark">
     <div class="container main-container">
       <RouterLink class="navbar-brand" to="/">Doorsys</RouterLink>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#main-menu"
-      >
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="main-menu">
