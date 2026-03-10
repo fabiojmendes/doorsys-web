@@ -4,6 +4,11 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue')
+    },
+    {
       path: '/',
       redirect: '/customers'
     },
@@ -24,6 +29,18 @@ const router = createRouter({
       component: () => import('@/views/EntryLogView.vue')
     }
   ]
+})
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem('user')
+
+  if (to.name !== 'login' && !isAuthenticated) {
+    next({ name: 'login' })
+  } else if (to.name === 'login' && isAuthenticated) {
+    next({ path: '/' })
+  } else {
+    next()
+  }
 })
 
 export default router

@@ -17,7 +17,8 @@
     "bootstrap-icons": "^1.0.0",
     "vue": "^3.0.0",
     "vue-router": "^5.0.0",
-    "vue-toastification": "^2.0.0-rc.5"
+    "vue-toastification": "^2.0.0-rc.5",
+    "vue3-google-login": "^2.0.0"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.0.0",

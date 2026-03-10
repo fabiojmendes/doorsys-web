@@ -1,10 +1,24 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { inject } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { googleLogout } from 'vue3-google-login'
+
+const user = inject('user')
+const router = useRouter()
+
+const logout = () => {
+  googleLogout()
+  user.isAuthenticated = false
+  user.data = {}
+  localStorage.removeItem('user')
+  router.push('/login')
+}
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-sm bg-dark" data-bs-theme="dark">
+  <nav class="navbar navbar-expand-sm bg-dark mb-4" data-bs-theme="dark">
     <div class="container main-container">
+      <RouterLink class="navbar-brand" to="/">Doorsys</RouterLink>
       <button
         class="navbar-toggler"
         type="button"
@@ -14,10 +28,16 @@ import { RouterLink } from 'vue-router'
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="main-menu">
-        <div class="navbar-nav">
-          <RouterLink class="navbar-brand" to="/">Doorsys</RouterLink>
+        <div class="navbar-nav me-auto" v-if="user.isAuthenticated">
           <RouterLink class="nav-item nav-link" to="/customers">Customers</RouterLink>
           <RouterLink class="nav-item nav-link" to="/logs">Logs</RouterLink>
+        </div>
+        <div class="navbar-nav ms-auto" v-if="user.isAuthenticated">
+          <span class="navbar-text me-3">
+            <img :src="user.data.picture" class="rounded-circle me-1" width="24" height="24" />
+            {{ user.data.name }}
+          </span>
+          <button class="btn btn-outline-light btn-sm" @click="logout">Logout</button>
         </div>
       </div>
     </div>
