@@ -8,6 +8,7 @@ const router = useRouter()
 
 const callback = (response) => {
   const userData = decodeCredential(response.credential)
+  userData.token = response.credential
   user.data = userData
   user.isAuthenticated = true
   localStorage.setItem('user', JSON.stringify(userData))
@@ -25,7 +26,7 @@ const callback = (response) => {
             Please sign in with your Google account to access the system
           </p>
           <div class="d-flex justify-content-center">
-            <GoogleLogin :callback="callback" />
+            <GoogleLogin :callback="callback" prompt auto-login />
           </div>
         </div>
       </div>
