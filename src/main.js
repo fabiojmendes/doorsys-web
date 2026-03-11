@@ -4,13 +4,13 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'vue-toastification/dist/index.css'
 import './assets/main.css'
 
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router.js'
 import axios from 'axios'
+import { createApp } from 'vue'
 import Toast, { POSITION } from 'vue-toastification'
 import vue3GoogleLogin from 'vue3-google-login'
-import { user, initAuth, refresh } from './auth.js'
+import App from './App.vue'
+import { initAuth, refresh, user } from './auth.js'
+import router from './router.js'
 
 initAuth()
 
