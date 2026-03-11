@@ -7,7 +7,7 @@ const user = reactive({
 })
 
 export function initAuth() {
-  const storedUser = sessionStorage.getItem('user')
+  const storedUser = localStorage.getItem('user')
   if (storedUser) {
     try {
       const userData = JSON.parse(storedUser)
@@ -24,7 +24,7 @@ export function login(response) {
   userData.token = response.credential
   user.data = userData
   user.isAuthenticated = true
-  sessionStorage.setItem('user', JSON.stringify(userData))
+  localStorage.setItem('user', JSON.stringify(userData))
 }
 
 export async function refresh() {
@@ -35,7 +35,7 @@ export async function refresh() {
 export function logout() {
   user.isAuthenticated = false
   user.data = {}
-  sessionStorage.removeItem('user')
+  localStorage.removeItem('user')
   googleLogout()
 }
 
