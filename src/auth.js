@@ -39,8 +39,4 @@ export function logout() {
   googleLogout()
 }
 
-export function isAuthenticated() {
-  return user.isAuthenticated
-}
-
 export { user }

@@ -15,7 +15,7 @@ const callback = (response) => {
     <div class="col-11 col-md-10 col-lg-8">
       <div class="card shadow">
         <div class="card-body text-center p-5">
-          <h2 class="mb-4 text-primary">Welcome</h2>
+          <h2 class="mb-4 text-primary">Doorsys</h2>
           <p class="text-muted mb-5">
             Please sign in with your Google account to access the system
           </p>
