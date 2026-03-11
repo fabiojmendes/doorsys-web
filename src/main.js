@@ -1,22 +1,20 @@
 import 'bootstrap'
-import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'vue-toastification/dist/index.css'
 import './assets/main.css'
 
-import axios from 'axios'
-import { createApp, reactive } from 'vue'
-import Toast, { POSITION } from 'vue-toastification'
-import vue3GoogleLogin from 'vue3-google-login'
+import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router.js'
+import axios from 'axios'
+import Toast, { POSITION } from 'vue-toastification'
+import vue3GoogleLogin from 'vue3-google-login'
+import { user, initAuth, refresh } from './auth.js'
+
+initAuth()
 
 const app = createApp(App)
-
-const user = reactive({
-  isAuthenticated: !!localStorage.getItem('user'),
-  data: JSON.parse(localStorage.getItem('user') || '{}')
-})
 
 const api = axios.create({
   baseURL: '/api',
@@ -34,12 +32,17 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      user.isAuthenticated = false
-      user.data = {}
-      localStorage.removeItem('user')
-      router.push('/login')
+  async (error) => {
+    const config = error.config
+    if (error.response?.status === 401 && !config._retry) {
+      try {
+        config._retry = true
+        await refresh()
+        config.headers.Authorization = `Bearer ${user.data.token}`
+        return api(config)
+      } catch (e) {
+        console.error('Authentication error', e)
+      }
     }
     return Promise.reject(error)
   }

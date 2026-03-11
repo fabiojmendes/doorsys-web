@@ -1,16 +1,14 @@
 <script setup>
 import { inject } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { googleLogout } from 'vue3-google-login'
+import { useRouter } from 'vue-router'
+
+import { logout } from '../auth.js'
 
 const user = inject('user')
 const router = useRouter()
 
-const logout = () => {
-  googleLogout()
-  user.isAuthenticated = false
-  user.data = {}
-  localStorage.removeItem('user')
+const handleLogout = () => {
+  logout()
   router.push('/login')
 }
 </script>
@@ -32,7 +30,7 @@ const logout = () => {
             <img :src="user.data.picture" class="rounded-circle me-1" width="24" height="24" />
             {{ user.data.name }}
           </span>
-          <button class="btn btn-outline-light btn-sm" @click="logout">Logout</button>
+          <button class="btn btn-outline-light btn-sm" @click="handleLogout">Logout</button>
         </div>
       </div>
     </div>

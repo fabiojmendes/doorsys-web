@@ -150,5 +150,8 @@ watch(filter, load, { deep: true })
     <span v-if="loading">Loading...</span>
     <span v-else-if="entries.length === 0">No Results found</span>
   </div>
+  <div>
+    <button v-on:click="api.get('/test')">test</button>
+  </div>
 </template>
 span

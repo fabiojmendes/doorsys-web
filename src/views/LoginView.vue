@@ -1,17 +1,11 @@
 <script setup>
-import { inject } from 'vue'
 import { useRouter } from 'vue-router'
-import { decodeCredential } from 'vue3-google-login'
+import { login } from '../auth.js'
 
-const user = inject('user')
 const router = useRouter()
 
 const callback = (response) => {
-  const userData = decodeCredential(response.credential)
-  userData.token = response.credential
-  user.data = userData
-  user.isAuthenticated = true
-  localStorage.setItem('user', JSON.stringify(userData))
+  login(response)
   router.push('/')
 }
 </script>
