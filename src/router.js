@@ -2,29 +2,29 @@ import { authGuard } from "@auth0/auth0-vue";
 import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
-	history: createWebHistory(import.meta.env.BASE_URL),
-	routes: [
-		{
-			path: "/",
-			redirect: "/customers",
-		},
-		{
-			path: "/customers",
-			component: () => import("@/views/CustomerListView.vue"),
-		},
-		{
-			path: "/customers/:id",
-			component: () => import("@/views/CustomerView.vue"),
-		},
-		{
-			path: "/staff/:id",
-			component: () => import("@/views/StaffView.vue"),
-		},
-		{
-			path: "/logs",
-			component: () => import("@/views/EntryLogView.vue"),
-		},
-	],
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: "/",
+      redirect: "/customers",
+    },
+    {
+      path: "/customers",
+      component: () => import("@/views/CustomerListView.vue"),
+    },
+    {
+      path: "/customers/:id",
+      component: () => import("@/views/CustomerView.vue"),
+    },
+    {
+      path: "/staff/:id",
+      component: () => import("@/views/StaffView.vue"),
+    },
+    {
+      path: "/logs",
+      component: () => import("@/views/EntryLogView.vue"),
+    },
+  ],
 });
 
 router.beforeEach(authGuard);

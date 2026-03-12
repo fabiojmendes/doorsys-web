@@ -5,15 +5,15 @@ import { RouterLink } from "vue-router";
 const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
 
 const handleLogin = () => {
-	loginWithRedirect();
+  loginWithRedirect();
 };
 
 const handleLogout = () => {
-	logout({
-		logoutParams: {
-			returnTo: window.location.origin,
-		},
-	});
+  logout({
+    logoutParams: {
+      returnTo: window.location.origin,
+    },
+  });
 };
 </script>
 

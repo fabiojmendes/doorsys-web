@@ -1,11 +1,11 @@
 table.table-hover tbody tr {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .inactive {
-	text-decoration: line-through;
+  text-decoration: line-through;
 }
 
 .main-container {
-	max-width: 45rem;
+  max-width: 45rem;
 }

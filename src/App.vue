@@ -8,15 +8,15 @@ import Navbar from "./components/Navbar.vue";
 const toast = useToast();
 
 onErrorCaptured((err) => {
-	if (err instanceof AxiosError) {
-		const message =
-			err.response?.data?.msg || err.response?.data || err.message;
-		toast.error(message);
-		return false;
-	} else {
-		toast.error("Oops! Unkown error");
-	}
-	return true;
+  if (err instanceof AxiosError) {
+    const message =
+      err.response?.data?.msg || err.response?.data || err.message;
+    toast.error(message);
+    return false;
+  } else {
+    toast.error("Oops! Unkown error");
+  }
+  return true;
 });
 </script>
 

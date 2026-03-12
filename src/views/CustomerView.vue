@@ -17,49 +17,49 @@ onMounted(load);
 watch(customer, loadStaff);
 
 function toggleEdit() {
-	editing.value = !editing.value;
+  editing.value = !editing.value;
 }
 
 async function load() {
-	const { id } = route.params;
-	if (id === "new") {
-		editing.value = true;
-		return;
-	}
+  const { id } = route.params;
+  if (id === "new") {
+    editing.value = true;
+    return;
+  }
 
-	const res = await api.get(`/customers/${id}`);
-	customer.value = res.data;
+  const res = await api.get(`/customers/${id}`);
+  customer.value = res.data;
 }
 
 async function loadStaff(customer) {
-	const staffRes = await api.get(`/customers/${customer.id}/staff`);
-	staffList.value = staffRes.data;
+  const staffRes = await api.get(`/customers/${customer.id}/staff`);
+  staffList.value = staffRes.data;
 }
 
 async function save() {
-	const { id } = customer.value;
-	if (id) {
-		const res = await api.put(`/customers/${id}`, customer.value);
-		customer.value = res.data;
-	} else {
-		const res = await api.post("/customers", customer.value);
-		customer.value = res.data;
-		router.replace(`/customers/${customer.value.id}`);
-	}
-	editing.value = false;
+  const { id } = customer.value;
+  if (id) {
+    const res = await api.put(`/customers/${id}`, customer.value);
+    customer.value = res.data;
+  } else {
+    const res = await api.post("/customers", customer.value);
+    customer.value = res.data;
+    router.replace(`/customers/${customer.value.id}`);
+  }
+  editing.value = false;
 }
 
 async function updateStatus() {
-	const confirmed = confirm(
-		`${customer.value.active ? "Deactivate" : "Activate"} ${customer.value.name}?`,
-	);
-	if (confirmed) {
-		const res = await api.put(
-			`/customers/${customer.value.id}/status`,
-			!customer.value.active,
-		);
-		customer.value = res.data;
-	}
+  const confirmed = confirm(
+    `${customer.value.active ? "Deactivate" : "Activate"} ${customer.value.name}?`,
+  );
+  if (confirmed) {
+    const res = await api.put(
+      `/customers/${customer.value.id}/status`,
+      !customer.value.active,
+    );
+    customer.value = res.data;
+  }
 }
 </script>
 

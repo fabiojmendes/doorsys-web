@@ -10,13 +10,13 @@ const formName = ref({});
 const newStaff = ref({});
 
 async function addStaffMember() {
-	const res = await api.post("/staff", {
-		customerId: props.customer.id,
-		...newStaff.value,
-	});
-	props.staffList.push(res.data);
-	newStaff.value = {};
-	formName.value.focus();
+  const res = await api.post("/staff", {
+    customerId: props.customer.id,
+    ...newStaff.value,
+  });
+  props.staffList.push(res.data);
+  newStaff.value = {};
+  formName.value.focus();
 }
 </script>
 

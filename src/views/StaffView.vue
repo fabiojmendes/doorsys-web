@@ -14,47 +14,47 @@ const staff = ref({});
 onMounted(loadStaff);
 
 async function loadStaff() {
-	const id = route.params.id;
-	const res = await api.get(`/staff/${id}`);
-	staff.value = res.data;
+  const id = route.params.id;
+  const res = await api.get(`/staff/${id}`);
+  staff.value = res.data;
 }
 
 async function save() {
-	// Set fob to null if empty
-	staff.value.fob ||= null;
-	const res = await api.put(`/staff/${staff.value.id}`, staff.value);
-	staff.value = res.data;
-	toast.success("Saved with success");
+  // Set fob to null if empty
+  staff.value.fob ||= null;
+  const res = await api.put(`/staff/${staff.value.id}`, staff.value);
+  staff.value = res.data;
+  toast.success("Saved with success");
 }
 
 async function resetPin() {
-	const confirmed = confirm(`Reset pin for ${staff.value.name}?`);
-	if (confirmed) {
-		const res = await api.post(`/staff/${staff.value.id}/pin`);
-		staff.value = res.data;
-	}
+  const confirmed = confirm(`Reset pin for ${staff.value.name}?`);
+  if (confirmed) {
+    const res = await api.post(`/staff/${staff.value.id}/pin`);
+    staff.value = res.data;
+  }
 }
 
 async function updateStatus() {
-	const confirmed = confirm(
-		`${staff.value.active ? "Deactivate" : "Activate"} ${staff.value.name}?`,
-	);
-	if (confirmed) {
-		const res = await api.put(
-			`/staff/${staff.value.id}/status`,
-			!staff.value.active,
-		);
-		staff.value = res.data;
-	}
+  const confirmed = confirm(
+    `${staff.value.active ? "Deactivate" : "Activate"} ${staff.value.name}?`,
+  );
+  if (confirmed) {
+    const res = await api.put(
+      `/staff/${staff.value.id}/status`,
+      !staff.value.active,
+    );
+    staff.value = res.data;
+  }
 }
 
 async function deleteStaff() {
-	const confirmed = confirm(`Delete ${staff.value.name}?`);
-	if (confirmed) {
-		const res = await api.delete(`/staff/${staff.value.id}`);
-		toast.success(`${staff.value.name} has been deleted`);
-		router.back();
-	}
+  const confirmed = confirm(`Delete ${staff.value.name}?`);
+  if (confirmed) {
+    const res = await api.delete(`/staff/${staff.value.id}`);
+    toast.success(`${staff.value.name} has been deleted`);
+    router.back();
+  }
 }
 </script>
 
