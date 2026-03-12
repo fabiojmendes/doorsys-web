@@ -1,0 +1,40 @@
+{
+	log {
+		format console
+		output stdout
+
+		exclude http.authentication.providers.jwt
+	}
+	# Tell Caddy to run the JWT check before processing basic auth or proxying
+	order jwtauth before basicauth
+}
+
+doorsys.example.com {
+	log
+
+	tls /etc/caddy/doorsys.crt /etc/caddy/doorsys.key
+
+	handle_path /api/* {
+		# 1. Intercept and validate the Auth0 JWT
+		jwtauth {
+			# Auth0's public endpoint for your specific tenant's keys
+			jwk_url https://TENANT.us.auth0.com/.well-known/jwks.json
+
+			# Security: The "Identifier" of the API you create in Auth0
+			audience_whitelist doorsys-api
+
+			# Security: Your Auth0 tenant URL
+			issuer_whitelist https://TENANT.us.auth0.com/
+		}
+
+		# 2. Proxy to your Rust backend
+		# If the token is valid, proxy it. If invalid, Caddy automatically returns 401.
+		reverse_proxy systemd-doorsys-api:3000
+	}
+
+	handle {
+		root * /var/www/html
+		try_files {path} /index.html
+		file_server
+	}
+}
