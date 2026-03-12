@@ -1,63 +1,63 @@
 <script setup>
-import { inject, computed, watch, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref, watch } from "vue";
 
 const LABELS = {
-  pin: '123',
-  fob: 'tag'
-}
+  pin: "123",
+  fob: "tag",
+};
 
-const api = inject('api')
+const api = inject("api");
 
-const loading = ref(false)
+const loading = ref(false);
 const filter = ref({
-  startDate: new Date().toLocaleDateString('en-CA'),
-  endDate: new Date().toLocaleDateString('en-CA'),
+  startDate: new Date().toLocaleDateString("en-CA"),
+  endDate: new Date().toLocaleDateString("en-CA"),
   customerId: null,
-  deviceId: null
-})
-const customers = ref([])
-const devices = ref([])
-const entries = ref([])
+  deviceId: null,
+});
+const customers = ref([]);
+const devices = ref([]);
+const entries = ref([]);
 
 const entryMap = computed(() => {
   return entries.value.reduce((acc, rawEntry) => {
     const entry = {
       ...rawEntry,
       eventDate: new Date(rawEntry.eventDate),
-      codeTypeLabel: LABELS[rawEntry.codeType]
-    }
-    const date = entry.eventDate.toLocaleDateString()
+      codeTypeLabel: LABELS[rawEntry.codeType],
+    };
+    const date = entry.eventDate.toLocaleDateString();
     if (!acc[date]) {
-      acc[date] = []
+      acc[date] = [];
     }
-    acc[date].push(entry)
-    return acc
-  }, {})
-})
+    acc[date].push(entry);
+    return acc;
+  }, {});
+});
 
 onMounted(async () => {
-  const res = await api.get('/customers', { params: { active: true } })
-  customers.value = res.data
+  const res = await api.get("/customers", { params: { active: true } });
+  customers.value = res.data;
 
-  const res2 = await api.get('/devices')
-  devices.value = res2.data
+  const res2 = await api.get("/devices");
+  devices.value = res2.data;
 
-  await load(filter.value)
-})
+  await load(filter.value);
+});
 
 async function load(params) {
-  loading.value = true
-  const startDate = new Date(params.startDate + ' 00:00:00')
-  const endDate = new Date(params.endDate + ' 23:59:59.999')
+  loading.value = true;
+  const startDate = new Date(`${params.startDate} 00:00:00`);
+  const endDate = new Date(`${params.endDate} 23:59:59.999`);
 
-  const res = await api.get('/entry_logs', {
-    params: { ...params, startDate, endDate }
-  })
-  entries.value = res.data
-  loading.value = false
+  const res = await api.get("/entry_logs", {
+    params: { ...params, startDate, endDate },
+  });
+  entries.value = res.data;
+  loading.value = false;
 }
 
-watch(filter, load, { deep: true })
+watch(filter, load, { deep: true });
 </script>
 
 <template>
@@ -89,22 +89,12 @@ watch(filter, load, { deep: true })
 
   <ul class="nav nav-tabs mt-2">
     <li class="nav-item">
-      <a
-        class="nav-link"
-        :class="filter.deviceId == null ? 'active' : ''"
-        href="#"
-        @click="filter.deviceId = null"
-        >All</a
-      >
+      <a class="nav-link" :class="filter.deviceId == null ? 'active' : ''" href="#"
+        @click="filter.deviceId = null">All</a>
     </li>
     <li v-for="d in devices" class="nav-item">
-      <a
-        class="nav-link"
-        :class="d.id == filter.deviceId ? 'active' : ''"
-        href="#"
-        @click="filter.deviceId = d.id"
-        >{{ d.name }}</a
-      >
+      <a class="nav-link" :class="d.id == filter.deviceId ? 'active' : ''" href="#" @click="filter.deviceId = d.id">{{
+        d.name }}</a>
     </li>
   </ul>
 
@@ -150,11 +140,7 @@ watch(filter, load, { deep: true })
           <td class="text-center">
             <i :class="`bi bi-${e.codeTypeLabel}`" :title="`Entry using ${e.codeType}`"></i>
             <i v-if="e.success" title="Successful entry" class="ms-1 bi bi-check-square"></i>
-            <i
-              v-else
-              title="Invalid attempt"
-              class="ms-1 text-danger bi bi-exclamation-octagon"
-            ></i>
+            <i v-else title="Invalid attempt" class="ms-1 text-danger bi bi-exclamation-octagon"></i>
           </td>
         </tr>
       </template>

@@ -1,19 +1,22 @@
 <script setup>
-import { inject, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { inject, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
-const api = inject('api')
-const router = useRouter()
-const props = defineProps({ customer: Object, staffList: Array })
+const api = inject("api");
+const router = useRouter();
+const props = defineProps({ customer: Object, staffList: Array });
 
-const formName = ref({})
-const newStaff = ref({})
+const formName = ref({});
+const newStaff = ref({});
 
 async function addStaffMember() {
-  const res = await api.post('/staff', { customerId: props.customer.id, ...newStaff.value })
-  props.staffList.push(res.data)
-  newStaff.value = {}
-  formName.value.focus()
+  const res = await api.post("/staff", {
+    customerId: props.customer.id,
+    ...newStaff.value,
+  });
+  props.staffList.push(res.data);
+  newStaff.value = {};
+  formName.value.focus();
 }
 </script>
 
@@ -26,14 +29,8 @@ async function addStaffMember() {
           <span class="input-group-text">
             <i class="bi bi-person"></i>
           </span>
-          <input
-            v-model="newStaff.name"
-            ref="formName"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Name"
-            required="true"
-          />
+          <input v-model="newStaff.name" ref="formName" type="text" class="form-control form-control-sm"
+            placeholder="Name" required="true" />
         </div>
       </div>
       <div class="row g-3 mb-3">
@@ -41,25 +38,15 @@ async function addStaffMember() {
           <span class="input-group-text">
             <i class="bi bi-telephone"></i>
           </span>
-          <input
-            v-model="newStaff.phone"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Phone"
-            required="true"
-          />
+          <input v-model="newStaff.phone" type="text" class="form-control form-control-sm" placeholder="Phone"
+            required="true" />
         </div>
         <div class="col input-group input-group-sm">
           <span class="input-group-text">
             <i class="bi bi-tag" title="Staff has fob"></i>
           </span>
-          <input
-            v-model="newStaff.fob"
-            type="number"
-            max="16777216"
-            class="form-control form-control-sm"
-            placeholder="Fob (Optional)"
-          />
+          <input v-model="newStaff.fob" type="number" max="16777216" class="form-control form-control-sm"
+            placeholder="Fob (Optional)" />
         </div>
       </div>
       <div class="text-end">

@@ -1,61 +1,64 @@
 <script setup>
-import { computed, inject, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import StaffList from '@/components/StaffList.vue'
-import BackButton from '@/components/BackButton.vue'
+import { computed, inject, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import BackButton from "@/components/BackButton.vue";
+import StaffList from "@/components/StaffList.vue";
 
-const api = inject('api')
-const route = useRoute()
-const router = useRouter()
+const api = inject("api");
+const route = useRoute();
+const router = useRouter();
 
-const customer = ref({})
-const staffList = ref([])
-const editing = ref(false)
-const isNewCustomer = computed(() => customer.value.id === undefined)
+const customer = ref({});
+const staffList = ref([]);
+const editing = ref(false);
+const isNewCustomer = computed(() => customer.value.id === undefined);
 
-onMounted(load)
-watch(customer, loadStaff)
+onMounted(load);
+watch(customer, loadStaff);
 
 function toggleEdit() {
-  editing.value = !editing.value
+  editing.value = !editing.value;
 }
 
 async function load() {
-  const { id } = route.params
-  if (id === 'new') {
-    editing.value = true
-    return
+  const { id } = route.params;
+  if (id === "new") {
+    editing.value = true;
+    return;
   }
 
-  const res = await api.get(`/customers/${id}`)
-  customer.value = res.data
+  const res = await api.get(`/customers/${id}`);
+  customer.value = res.data;
 }
 
 async function loadStaff(customer) {
-  const staffRes = await api.get(`/customers/${customer.id}/staff`)
-  staffList.value = staffRes.data
+  const staffRes = await api.get(`/customers/${customer.id}/staff`);
+  staffList.value = staffRes.data;
 }
 
 async function save() {
-  const { id } = customer.value
+  const { id } = customer.value;
   if (id) {
-    const res = await api.put(`/customers/${id}`, customer.value)
-    customer.value = res.data
+    const res = await api.put(`/customers/${id}`, customer.value);
+    customer.value = res.data;
   } else {
-    const res = await api.post('/customers', customer.value)
-    customer.value = res.data
-    router.replace(`/customers/${customer.value.id}`)
+    const res = await api.post("/customers", customer.value);
+    customer.value = res.data;
+    router.replace(`/customers/${customer.value.id}`);
   }
-  editing.value = false
+  editing.value = false;
 }
 
 async function updateStatus() {
   const confirmed = confirm(
-    `${customer.value.active ? 'Deactivate' : 'Activate'} ${customer.value.name}?`
-  )
+    `${customer.value.active ? "Deactivate" : "Activate"} ${customer.value.name}?`,
+  );
   if (confirmed) {
-    const res = await api.put(`/customers/${customer.value.id}/status`, !customer.value.active)
-    customer.value = res.data
+    const res = await api.put(
+      `/customers/${customer.value.id}/status`,
+      !customer.value.active,
+    );
+    customer.value = res.data;
   }
 }
 </script>
@@ -101,12 +104,7 @@ async function updateStatus() {
         </div>
         <div class="d-inline-flex gap-2">
           <button type="button" class="btn btn-primary" @click="toggleEdit">Edit</button>
-          <button
-            v-if="customer.active"
-            type="button"
-            class="btn btn-warning"
-            @click="updateStatus"
-          >
+          <button v-if="customer.active" type="button" class="btn btn-warning" @click="updateStatus">
             Deactivate
           </button>
           <button v-else type="button" class="btn btn-success" @click="updateStatus">

@@ -1,31 +1,26 @@
 <script setup>
-import { RouterLink } from 'vue-router'
-import { useAuth0 } from '@auth0/auth0-vue'
+import { useAuth0 } from "@auth0/auth0-vue";
+import { RouterLink } from "vue-router";
 
-const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0()
+const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
 
 const handleLogin = () => {
-  loginWithRedirect()
-}
+  loginWithRedirect();
+};
 
 const handleLogout = () => {
   logout({
     logoutParams: {
-      returnTo: window.location.origin
-    }
-  })
-}
+      returnTo: window.location.origin,
+    },
+  });
+};
 </script>
 
 <template>
   <nav class="navbar navbar-expand-sm bg-dark" data-bs-theme="dark">
     <div class="container main-container">
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#main-menu"
-      >
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="main-menu">
@@ -42,13 +37,8 @@ const handleLogout = () => {
           </template>
           <template v-else>
             <div class="d-flex align-items-center me-3">
-              <img
-                v-if="user?.picture"
-                :src="user.picture"
-                alt="User Profile"
-                class="rounded-circle me-2"
-                style="width: 30px; height: 30px"
-              />
+              <img v-if="user?.picture" :src="user.picture" alt="User Profile" class="rounded-circle me-2"
+                style="width: 30px; height: 30px" />
               <span class="text-light small">{{ user?.name || user?.email }}</span>
             </div>
             <button class="btn btn-outline-light btn-sm" @click="handleLogout">Log out</button>
