@@ -1,10 +1,18 @@
 {
+	log {
+		format console
+		output stdout
+
+		exclude http.authentication.providers.jwt
+	}
 	# Tell Caddy to run the JWT check before processing basic auth or proxying
 	order jwtauth before basicauth
 }
 
 doorsys.example.com {
-	tls /etc/caddy/cert.crt /etc/caddy/private.key
+	log
+
+	tls /etc/caddy/doorsys.crt /etc/caddy/doorsys.key
 
 	handle_path /api/* {
 		# 1. Intercept and validate the Auth0 JWT
