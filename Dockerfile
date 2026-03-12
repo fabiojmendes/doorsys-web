@@ -1,5 +1,9 @@
 # build stage
 FROM node:lts-alpine AS build-stage
+
+ARG VITE_AUTH0_CLIENT_ID
+ARG VITE_AUTH0_DOMAIN
+
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
