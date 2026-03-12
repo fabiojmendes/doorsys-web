@@ -7,7 +7,7 @@ import Navbar from "./components/Navbar.vue";
 
 const toast = useToast();
 
-onErrorCaptured((err, vm, info) => {
+onErrorCaptured((err) => {
 	if (err instanceof AxiosError) {
 		const message =
 			err.response?.data?.msg || err.response?.data || err.message;

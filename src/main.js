@@ -41,7 +41,7 @@ api.interceptors.request.use(async (config) => {
 	try {
 		const token = await auth0.getAccessTokenSilently();
 		config.headers.Authorization = `Bearer ${token}`;
-	} catch (e) {
+	} catch {
 		// If not authenticated or error, continue without token
 	}
 	return config;
