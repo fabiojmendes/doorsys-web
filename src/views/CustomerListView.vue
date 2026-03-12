@@ -1,27 +1,27 @@
 <script setup>
-import { watch, inject, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { inject, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 
-const api = inject('api')
-const customers = ref([])
-const filter = ref({ active: true })
+const api = inject("api");
+const customers = ref([]);
+const filter = ref({ active: true });
 
 onMounted(async () => {
-  await load(filter.value)
-})
+	await load(filter.value);
+});
 
 async function load(params) {
-  const res = await api.get('/customers', { params })
-  customers.value = res.data
+	const res = await api.get("/customers", { params });
+	customers.value = res.data;
 }
 
 function openCustomer(id) {
-  router.push({ path: `/customers/${id}` })
+	router.push({ path: `/customers/${id}` });
 }
 
-watch(filter, load, { deep: true })
+watch(filter, load, { deep: true });
 </script>
 
 <template>

@@ -1,19 +1,22 @@
 <script setup>
-import { inject, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { inject, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
-const api = inject('api')
-const router = useRouter()
-const props = defineProps({ customer: Object, staffList: Array })
+const api = inject("api");
+const router = useRouter();
+const props = defineProps({ customer: Object, staffList: Array });
 
-const formName = ref({})
-const newStaff = ref({})
+const formName = ref({});
+const newStaff = ref({});
 
 async function addStaffMember() {
-  const res = await api.post('/staff', { customerId: props.customer.id, ...newStaff.value })
-  props.staffList.push(res.data)
-  newStaff.value = {}
-  formName.value.focus()
+	const res = await api.post("/staff", {
+		customerId: props.customer.id,
+		...newStaff.value,
+	});
+	props.staffList.push(res.data);
+	newStaff.value = {};
+	formName.value.focus();
 }
 </script>
 
