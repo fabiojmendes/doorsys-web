@@ -1,29 +1,22 @@
-# build stage
-FROM node:lts-alpine AS node-builder
-
-ARG VITE_AUTH0_CLIENT_ID
-ARG VITE_AUTH0_DOMAIN
-
+FROM node:24-alpine AS development-dependencies-env
+COPY . /app
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
+RUN npm ci
+
+FROM node:24-alpine AS production-dependencies-env
+COPY ./package.json package-lock.json /app/
+WORKDIR /app
+RUN npm ci --omit=dev
+
+FROM node:24-alpine AS build-env
+COPY . /app/
+COPY --from=development-dependencies-env /app/node_modules /app/node_modules
+WORKDIR /app
 RUN npm run build
 
-# Stage 1: Build Caddy with the JWT plugin
-FROM caddy:builder AS caddy-builder
-RUN xcaddy build --with github.com/ggicci/caddy-jwt
-
-# Stage 2: Serve using the official base image
-FROM caddy:alpine
-COPY --from=cadedy-builder /usr/bin/caddy /usr/bin/caddy
-
-# Stage 3: Production image
-FROM caddy:alpine AS production-stage
-COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
-
-COPY --from=node-builder /app/dist /var/www/html
-
-EXPOSE 80
-EXPOSE 443
-EXPOSE 443/udp
+FROM node:24-alpine
+COPY ./package.json package-lock.json /app/
+COPY --from=production-dependencies-env /app/node_modules /app/node_modules
+COPY --from=build-env /app/build /app/build
+WORKDIR /app
+CMD ["npm", "run", "start"]
