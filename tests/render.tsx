@@ -74,6 +74,7 @@ export function button(
 
 export async function click(element: HTMLElement) {
   await act(async () => {
+    element.focus();
     element.click();
   });
 }

@@ -4,6 +4,20 @@ Mobile-first administration for customers, staff access credentials, and entry l
 Built with React Router Framework SPA mode, TypeScript, Material UI, and Biome.
 Errors remain visible in MUI alerts and field helper text; snackbars only confirm success.
 
+## Workflows
+
+- Search the customer directory by name or email, with explicit Active/Inactive
+  filters. Searches stay in the URL and filter the loaded list without extra API calls.
+- Create customers, edit details, and add staff in contextual sheets. Sheets open
+  from the bottom on phones and from the side on larger screens; changed forms
+  require an explicit cancel/discard before dismissal.
+- Customer workspaces separate staff from account details and link directly to
+  their activity. Staff profiles focus on credentials, with PIN reveal/copy/reset
+  controls and access management grouped separately.
+- Activity offers Today, Yesterday, and Last 7 days presets, local outcome filters,
+  and a filter sheet for dates, customer search, and devices. Draft filters only
+  take effect when applied. API contracts and existing direct URLs are preserved.
+
 ## Development
 
 Use Node.js 24 or newer and npm.

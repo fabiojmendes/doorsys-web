@@ -9,6 +9,7 @@ import {
   BottomNavigation,
   BottomNavigationAction,
   Box,
+  Button,
   Container,
   IconButton,
   LinearProgress,
@@ -51,7 +52,7 @@ export function Shell({
             sx={{
               minHeight: 56,
               width: "100%",
-              maxWidth: "47rem",
+              maxWidth: "56rem",
               mx: "auto",
               gap: 1,
             }}
@@ -68,6 +69,32 @@ export function Shell({
             >
               Doorsys
             </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ display: { xs: "none", md: "flex" }, mr: 2 }}
+            >
+              <Button
+                component={Link}
+                to="/customers"
+                variant={
+                  location.pathname.startsWith("/logs") ? "text" : "contained"
+                }
+                startIcon={<GroupsOutlinedIcon />}
+              >
+                Customers
+              </Button>
+              <Button
+                component={Link}
+                to="/logs"
+                variant={
+                  location.pathname.startsWith("/logs") ? "contained" : "text"
+                }
+                startIcon={<HistoryOutlinedIcon />}
+              >
+                Activity
+              </Button>
+            </Stack>
             <Tooltip title={user?.name || user?.email || "Account"}>
               <Avatar
                 src={user?.picture}
@@ -104,10 +131,10 @@ export function Shell({
           component="main"
           id="main-content"
           sx={{
-            maxWidth: "45rem !important",
+            maxWidth: "52rem !important",
             px: { xs: 2, sm: 3 },
             pt: 2,
-            pb: "calc(88px + env(safe-area-inset-bottom))",
+            pb: { xs: "calc(88px + env(safe-area-inset-bottom))", md: 4 },
           }}
         >
           <Stack spacing={2}>
@@ -128,6 +155,7 @@ export function Shell({
             borderTop: 1,
             borderColor: "divider",
             pb: "env(safe-area-inset-bottom)",
+            display: { xs: "block", md: "none" },
           }}
         >
           <BottomNavigation
@@ -145,7 +173,7 @@ export function Shell({
               component={Link}
               to="/logs"
               value="logs"
-              label="Logs"
+              label="Activity"
               icon={<HistoryOutlinedIcon />}
             />
           </BottomNavigation>

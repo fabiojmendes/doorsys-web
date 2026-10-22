@@ -2,6 +2,20 @@ export function localDate(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+export function datePreset(
+  preset: "today" | "yesterday" | "week",
+  now = new Date(),
+) {
+  const start = new Date(now);
+  const end = new Date(now);
+  if (preset === "yesterday") {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+  }
+  if (preset === "week") start.setDate(start.getDate() - 6);
+  return { startDate: localDate(start), endDate: localDate(end) };
+}
+
 function validDate(value: string | null): value is string {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00`);

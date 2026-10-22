@@ -15,8 +15,15 @@ import CustomerPage, {
 import NewCustomer, {
   clientAction as newCustomerAction,
 } from "../app/routes/customer-new";
+import Customers, {
+  clientLoader as customersLoader,
+  shouldRevalidate as customersShouldRevalidate,
+} from "../app/routes/customers";
 import Home from "../app/routes/home";
-import Logs, { clientLoader as logsLoader } from "../app/routes/logs";
+import Logs, {
+  clientLoader as logsLoader,
+  shouldRevalidate as logsShouldRevalidate,
+} from "../app/routes/logs";
 import StaffPage, {
   clientAction as staffAction,
   clientLoader as staffLoader,
@@ -52,6 +59,14 @@ const staff = {
 };
 const mockApi = vi.mocked(api);
 
+function CustomersRoute() {
+  return (
+    <Customers
+      {...({ loaderData: useLoaderData() } as Parameters<typeof Customers>[0])}
+    />
+  );
+}
+
 function CustomerRoute() {
   return (
     <CustomerPage
@@ -83,6 +98,12 @@ function RootRoute() {
 }
 
 const customerRoutes = [
+  {
+    path: "/customers",
+    Component: CustomersRoute,
+    loader: customersLoader as LoaderFunction,
+    shouldRevalidate: customersShouldRevalidate,
+  },
   {
     path: "/customers/new",
     Component: NewCustomer,
@@ -119,6 +140,78 @@ beforeEach(() => {
 });
 
 describe("customer workflows", () => {
+  it("searches the loaded directory without another API request and retains the search in the URL", async () => {
+    mockApi.mockResolvedValue([
+      customer,
+      { ...customer, id: 10, name: "North team", email: "north@example.com" },
+    ]);
+    const router = await renderRouter(customerRoutes, "/customers");
+    const search = document.querySelector<HTMLInputElement>(
+      'input[placeholder="Name or email"]',
+    );
+    if (!search) throw new Error("Missing directory search");
+    await fill(search, "north");
+    await settle(() => router.state.location.search.includes("q=north"));
+    expect(
+      document.querySelector('[aria-label="Customers"] a[href="/customers/7"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector(
+        '[aria-label="Customers"] a[href="/customers/10"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      mockApi.mock.calls.filter(([path]) => path === "/customers"),
+    ).toHaveLength(1);
+  });
+
+  it("creates a customer from the directory sheet, retaining context on failure", async () => {
+    let fail = true;
+    mockApi.mockImplementation(async (path, options) => {
+      if (path === "/customers" && options?.method === "POST") {
+        if (fail) throw new Error("Email is already registered");
+        return customer;
+      }
+      if (path === "/customers") return [customer];
+      if (path.endsWith("/staff")) return [];
+      return customer;
+    });
+    const router = await renderRouter(customerRoutes, "/customers?q=Acme");
+    await click(button("New"));
+    await fill(input("name"), "Acme");
+    await fill(input("email"), "acme@example.com");
+    await click(button("Create customer"));
+    await settle(() =>
+      Boolean(document.querySelector('[role="dialog"] [role="alert"]')),
+    );
+    expect(router.state.location.search).toBe("?q=Acme");
+    expect(input("email").value).toBe("acme@example.com");
+    expect(document.querySelector(".MuiSnackbar-root")).toBeNull();
+    fail = false;
+    await click(button("Create customer"));
+    await settle(() => router.state.location.pathname === "/customers/7");
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it("warns before dismissing a changed sheet, and discards only on explicit request", async () => {
+    await renderRouter(customerRoutes, "/customers/7");
+    await click(button("Edit"));
+    await fill(input("name"), "Unsaved change");
+    const close = document.querySelector<HTMLElement>(
+      '[aria-label="Close edit customer"]',
+    );
+    if (!close) throw new Error("Missing sheet close control");
+    await click(close);
+    expect(
+      document.querySelector('[role="dialog"] [role="alert"]')?.textContent,
+    ).toContain("unsaved changes");
+    expect(input("name").value).toBe("Unsaved change");
+    await click(button("Discard"));
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    await click(button("Edit"));
+    expect(input("name").value).toBe("Acme");
+  });
+
   it("cancels edits without changing saved customer values", async () => {
     await renderRouter(customerRoutes, "/customers/7");
     await click(button("Edit"));
@@ -146,7 +239,7 @@ describe("customer workflows", () => {
     const router = await renderRouter(customerRoutes, "/customers/new");
     await fill(input("name"), "Acme");
     await fill(input("email"), "acme@example.com");
-    await click(button("Save"));
+    await click(button("Create customer"));
     await settle(() => Boolean(document.querySelector('[role="alert"]')));
     expect(document.querySelector('[role="alert"]')?.textContent).toContain(
       "Email is already registered",
@@ -158,14 +251,14 @@ describe("customer workflows", () => {
       "Email is already registered",
     );
     fail = false;
-    await click(button("Save"));
+    await click(button("Create customer"));
     await settle(() => router.state.location.pathname === "/customers/7");
     expect(document.querySelector('[role="alert"]')).toBeNull();
   });
 
   it("shows accessible field validation without making a request", async () => {
     await renderRouter(customerRoutes, "/customers/new");
-    await click(button("Save"));
+    await click(button("Create customer"));
     await settle(() => input("name").getAttribute("aria-invalid") === "true");
     const helper = input("name").getAttribute("aria-describedby");
     expect(helper && document.getElementById(helper)?.textContent).toBe(
@@ -176,6 +269,7 @@ describe("customer workflows", () => {
 
   it("confirms a status change and sends a raw boolean", async () => {
     await renderRouter(customerRoutes, "/customers/7");
+    await click(button("Details"));
     await click(button("Deactivate"));
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
     expect(dialog).not.toBeNull();
@@ -192,7 +286,48 @@ describe("customer workflows", () => {
 });
 
 describe("staff workflows", () => {
-  it("adds staff to the customer, then resets the form and refreshes the list", async () => {
+  it("reveals and copies a PIN, with persistent inline recovery when copying fails", async () => {
+    const writeText = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Clipboard access denied"))
+      .mockResolvedValue(undefined);
+    const originalNavigator = navigator;
+    vi.stubGlobal(
+      "navigator",
+      new Proxy(originalNavigator, {
+        get(target, key) {
+          return key === "clipboard"
+            ? { writeText }
+            : Reflect.get(target, key, target);
+        },
+      }),
+    );
+    await renderRouter(staffRoutes, "/staff/8");
+    expect(
+      document.querySelector('input[type="password"]')?.getAttribute("value"),
+    ).toBe("1234");
+    const reveal = document.querySelector<HTMLElement>(
+      '[aria-label="Reveal PIN"]',
+    );
+    if (!reveal) throw new Error("Missing PIN reveal control");
+    await click(reveal);
+    expect(
+      document.querySelector("input[readonly]")?.getAttribute("type"),
+    ).toBe("text");
+    await click(button("Copy PIN"));
+    expect(document.querySelector('[role="alert"]')?.textContent).toContain(
+      "Clipboard access denied",
+    );
+    expect(document.querySelector(".MuiSnackbar-root")).toBeNull();
+    await click(button("Copy PIN"));
+    expect(writeText).toHaveBeenLastCalledWith("1234");
+    expect(document.querySelector('[role="alert"]')).toBeNull();
+    expect(document.querySelector('[role="status"]')?.textContent).toBe(
+      "PIN copied.",
+    );
+  });
+
+  it("adds staff in a sheet, then closes it and refreshes the list", async () => {
     let added = false;
     const newStaff = {
       ...staff,
@@ -213,11 +348,16 @@ describe("staff workflows", () => {
     await click(button("Add staff"));
     await fill(input("name"), "Taylor");
     await fill(input("phone"), "555-0101");
-    await click(button("Add"));
+    await click(
+      button(
+        "Add staff",
+        document.querySelector('[role="dialog"]') ?? document,
+      ),
+    );
     await settle(
       () =>
         document.body.textContent?.includes("Taylor") === true &&
-        input("name").value === "",
+        !document.querySelector('[role="dialog"]'),
     );
     expect(mockApi).toHaveBeenCalledWith(
       "/staff",
@@ -226,13 +366,14 @@ describe("staff workflows", () => {
         body: { customerId: 7, name: "Taylor", phone: "555-0101", fob: null },
       }),
     );
-    expect(document.activeElement).toBe(input("name"));
+    expect(document.activeElement).toBe(button("Add staff"));
   });
 
   it("normalizes an empty fob to null when saving", async () => {
     await renderRouter(staffRoutes, "/staff/8");
+    await click(button("Edit"));
     await fill(input("fob"), "");
-    await click(button("Save"));
+    await click(button("Save changes"));
     await settle(() =>
       mockApi.mock.calls.some(([, options]) => options?.method === "PUT"),
     );
@@ -281,6 +422,7 @@ describe("staff workflows", () => {
 
   it("returns to the owning customer after confirmed deletion", async () => {
     const router = await renderRouter(staffRoutes, "/staff/8");
+    await click(button("Manage access"));
     await click(button("Delete"));
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
     if (!dialog) throw new Error("Missing deletion dialog");
@@ -294,6 +436,79 @@ describe("staff workflows", () => {
 });
 
 describe("log workflows", () => {
+  it("keeps draft filters local until applied, and discards them on cancel", async () => {
+    await renderRouter(
+      [
+        {
+          path: "/logs",
+          Component: LogsRoute,
+          loader: logsLoader as LoaderFunction,
+          shouldRevalidate: logsShouldRevalidate,
+        },
+      ],
+      "/logs?startDate=2026-10-20&endDate=2026-10-22",
+    );
+    await click(button("Filters"));
+    const start =
+      document.querySelector<HTMLInputElement>('input[type="date"]');
+    if (!start) throw new Error("Missing start date");
+    await fill(start, "2026-10-21");
+    expect(
+      mockApi.mock.calls.filter(([path]) => path === "/entry_logs"),
+    ).toHaveLength(1);
+    await click(button("Cancel"));
+    await click(button("Filters"));
+    expect(
+      document.querySelector<HTMLInputElement>('input[type="date"]')?.value,
+    ).toBe("2026-10-20");
+  });
+
+  it("filters denied attempts without fetching again or losing the customer filter", async () => {
+    mockApi.mockImplementation(async (path) => {
+      if (path === "/customers") return [customer];
+      if (path === "/devices") return [];
+      return [
+        {
+          id: 1,
+          eventDate: "2026-10-22T10:00:00Z",
+          staffId: 8,
+          staffName: "Alex",
+          customerId: 7,
+          customerName: "Acme",
+          code: "1234",
+          codeType: "pin",
+          success: true,
+        },
+        {
+          id: 2,
+          eventDate: "2026-10-22T10:05:00Z",
+          code: "9999",
+          codeType: "pin",
+          success: false,
+        },
+      ];
+    });
+    const router = await renderRouter(
+      [
+        {
+          path: "/logs",
+          Component: LogsRoute,
+          loader: logsLoader as LoaderFunction,
+          shouldRevalidate: logsShouldRevalidate,
+        },
+      ],
+      "/logs?customerId=7",
+    );
+    await click(button("Denied"));
+    await settle(() => router.state.location.search.includes("outcome=denied"));
+    expect(router.state.location.search).toContain("customerId=7");
+    expect(document.body.textContent).not.toContain("Successful entry");
+    expect(document.body.textContent).toContain("Invalid attempt");
+    expect(
+      mockApi.mock.calls.filter(([path]) => path === "/entry_logs"),
+    ).toHaveLength(1);
+  });
+
   it("preserves a pending date change when a device filter is changed before loading completes", async () => {
     let release: (() => void) | undefined;
     let requests = 0;
@@ -316,14 +531,17 @@ describe("log workflows", () => {
           path: "/logs",
           Component: LogsRoute,
           loader: logsLoader as LoaderFunction,
+          shouldRevalidate: logsShouldRevalidate,
         },
       ],
       "/logs?startDate=2026-10-20&endDate=2026-10-22",
     );
+    await click(button("Filters"));
     const start =
       document.querySelector<HTMLInputElement>('input[type="date"]');
     if (!start) throw new Error("Missing start date");
     await fill(start, "2026-10-21");
+    await click(button("Apply filters"));
     await settle(() => requests === 2);
     await click(button("Front door"));
     await settle(() => router.state.navigation.state === "idle");
@@ -359,6 +577,7 @@ describe("log workflows", () => {
           path: "/logs",
           Component: LogsRoute,
           loader: logsLoader as LoaderFunction,
+          shouldRevalidate: logsShouldRevalidate,
         },
       ],
       "/logs",
@@ -376,6 +595,7 @@ describe("log workflows", () => {
           path: "/logs",
           Component: LogsRoute,
           loader: logsLoader as LoaderFunction,
+          shouldRevalidate: logsShouldRevalidate,
         },
       ],
       "/logs?startDate=2026-10-21&endDate=2026-10-22&customerId=7",
@@ -406,6 +626,7 @@ describe("log workflows", () => {
           path: "/logs",
           Component: LogsRoute,
           loader: logsLoader as LoaderFunction,
+          shouldRevalidate: logsShouldRevalidate,
         },
       ],
       "/logs?startDate=2026-10-22&endDate=2026-10-21",

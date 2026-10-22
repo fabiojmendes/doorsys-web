@@ -13,10 +13,12 @@ export function PageHeader({
   title,
   back,
   action,
+  description,
 }: {
   title: string;
   back?: string;
   action?: ReactNode;
+  description?: string;
 }) {
   const navigate = useNavigate();
   return (
@@ -50,9 +52,16 @@ export function PageHeader({
         justifyContent="space-between"
         gap={1}
       >
-        <Typography variant="h1" sx={{ overflowWrap: "anywhere", minWidth: 0 }}>
-          {title}
-        </Typography>
+        <Stack spacing={0.5} sx={{ minWidth: 0, flex: 1 }}>
+          <Typography variant="h1" sx={{ overflowWrap: "anywhere" }}>
+            {title}
+          </Typography>
+          {description && (
+            <Typography variant="body2" color="text.secondary">
+              {description}
+            </Typography>
+          )}
+        </Stack>
         {action}
       </Stack>
     </Stack>

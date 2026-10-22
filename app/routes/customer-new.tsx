@@ -1,3 +1,4 @@
+import { Paper } from "@mui/material";
 import { replace } from "react-router";
 import { CustomerForm } from "../components/customer-form";
 import { ErrorPage } from "../components/error-page";
@@ -33,8 +34,14 @@ export async function clientAction({
 export default function NewCustomer() {
   return (
     <>
-      <PageHeader title="New customer" back="/customers" />
-      <CustomerForm />
+      <PageHeader
+        title="New customer"
+        description="Start with contact details. Add staff next."
+        back="/customers"
+      />
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <CustomerForm />
+      </Paper>
     </>
   );
 }

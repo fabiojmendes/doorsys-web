@@ -1,9 +1,12 @@
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   Button,
   Chip,
+  InputAdornment,
   List,
+  ListItem,
   ListItemButton,
   ListItemText,
   Paper,
@@ -11,12 +14,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useRef, useState } from "react";
-import { Link, useFetcher } from "react-router";
-import { FOB_MAX } from "../lib/forms";
-import type { Customer, MutationResult, Staff } from "../lib/types";
-import { RequestError, useMutationFeedback } from "./feedback";
+import { useState } from "react";
+import { Link } from "react-router";
+import type { Customer, Staff } from "../lib/types";
 import { EmptyState } from "./page";
+import { RecordAvatar } from "./record-avatar";
+import { StaffForm } from "./staff-form";
+import { TaskSheet } from "./task-sheet";
 
 export function StaffList({
   customer,
@@ -26,136 +30,114 @@ export function StaffList({
   staff: Staff[];
 }) {
   const [adding, setAdding] = useState(false);
-  const form = useRef<HTMLFormElement>(null);
-  const name = useRef<HTMLInputElement>(null);
-  const fetcher = useFetcher<MutationResult>();
-  const busy = fetcher.state !== "idle";
-  const error = useMutationFeedback(fetcher, () => {
-    form.current?.reset();
-    name.current?.focus();
-  });
+  const [query, setQuery] = useState("");
+  const visible = staff.filter((member) =>
+    `${member.name} ${member.phone}`
+      .toLocaleLowerCase()
+      .includes(query.trim().toLocaleLowerCase()),
+  );
   return (
-    <Paper variant="outlined" sx={{ overflow: "hidden" }}>
+    <Stack spacing={2}>
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ px: 2, py: 1 }}
+        gap={1}
       >
         <Typography variant="h2">Staff members ({staff.length})</Typography>
-        {customer.active && !adding && (
-          <Button startIcon={<AddIcon />} onClick={() => setAdding(true)}>
+        {customer.active && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setAdding(true)}
+          >
             Add staff
           </Button>
         )}
       </Stack>
-      {customer.active && adding && (
-        <Stack
-          component={fetcher.Form}
-          ref={form}
-          method="post"
-          noValidate
-          aria-label="Add staff"
-          spacing={2}
-          sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}
-        >
-          <input type="hidden" name="intent" value="add-staff" />
-          <RequestError message={error?.error} />
-          <TextField
-            inputRef={name}
-            label="Name"
-            name="name"
-            autoComplete="name"
-            required
-            disabled={busy}
-            error={Boolean(error?.fields?.name)}
-            helperText={error?.fields?.name}
-          />
-          <TextField
-            label="Phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            required
-            disabled={busy}
-            error={Boolean(error?.fields?.phone)}
-            helperText={error?.fields?.phone}
-          />
-          <TextField
-            label="Fob (optional)"
-            name="fob"
-            type="number"
-            disabled={busy}
-            slotProps={{ htmlInput: { min: 0, max: FOB_MAX, step: 1 } }}
-            error={Boolean(error?.fields?.fob)}
-            helperText={error?.fields?.fob}
-          />
-          <Stack direction="row" gap={1} justifyContent="flex-end">
-            <Button
-              disabled={busy}
-              onClick={() => {
-                setAdding(false);
-                fetcher.reset();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="reset"
-              disabled={busy}
-              onClick={() => fetcher.reset()}
-            >
-              Reset
-            </Button>
-            <Button variant="contained" type="submit" disabled={busy}>
-              {busy ? "Adding…" : "Add"}
-            </Button>
-          </Stack>
-        </Stack>
+      {staff.length > 0 && (
+        <TextField
+          label="Find staff"
+          placeholder="Name or phone"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
       )}
-      {staff.length ? (
-        <List disablePadding aria-label="Staff members">
-          {staff.map((member) => (
-            <ListItemButton
-              component={Link}
-              to={`/staff/${member.id}`}
-              key={member.id}
-              divider
-              alignItems="flex-start"
-            >
-              <Stack sx={{ flex: 1, minWidth: 0 }}>
-                <ListItemText
-                  primary={member.name}
-                  secondary={member.phone}
-                  slotProps={{
-                    primary: {
-                      sx: { fontWeight: 500, overflowWrap: "anywhere" },
-                    },
-                    secondary: { sx: { overflowWrap: "anywhere" } },
-                  }}
-                />
-                <Stack
-                  direction="row"
-                  gap={0.5}
-                  flexWrap="wrap"
-                  sx={{ mb: 0.5 }}
+      <Paper variant="outlined">
+        {visible.length ? (
+          <List disablePadding aria-label="Staff members">
+            {visible.map((member) => (
+              <ListItem key={member.id} disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to={`/staff/${member.id}`}
+                  key={member.id}
+                  divider
+                  sx={{ gap: 1.5, py: 1.5 }}
                 >
-                  {!member.active && <Chip size="small" label="Inactive" />}
-                  {Boolean(member.fob) && (
-                    <Chip size="small" label="Fob" variant="outlined" />
-                  )}
-                  {Boolean(member.pin) && (
-                    <Chip size="small" label="PIN" variant="outlined" />
-                  )}
-                </Stack>
-              </Stack>
-              <ChevronRightIcon color="action" sx={{ mt: 1 }} />
-            </ListItemButton>
-          ))}
-        </List>
-      ) : (
-        <EmptyState>No staff members yet.</EmptyState>
+                  <RecordAvatar name={member.name} />
+                  <Stack sx={{ flex: 1, minWidth: 0 }}>
+                    <ListItemText
+                      primary={member.name}
+                      secondary={member.phone}
+                      slotProps={{
+                        primary: {
+                          sx: { fontWeight: 600, overflowWrap: "anywhere" },
+                        },
+                        secondary: { sx: { overflowWrap: "anywhere" } },
+                      }}
+                    />
+                    <Stack direction="row" gap={0.5} flexWrap="wrap">
+                      {!member.active && <Chip size="small" label="Inactive" />}
+                      {Boolean(member.fob) && (
+                        <Chip size="small" label="Fob" variant="outlined" />
+                      )}
+                      {Boolean(member.pin) && (
+                        <Chip size="small" label="PIN" variant="outlined" />
+                      )}
+                      {!member.fob && !member.pin && (
+                        <Typography variant="caption" color="text.secondary">
+                          No credentials assigned
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Stack>
+                  <ChevronRightIcon color="action" fontSize="small" />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        ) : (
+          <EmptyState>
+            {query
+              ? "No staff match your search."
+              : customer.active
+                ? "No staff yet. Add a staff member to assign access."
+                : "No staff members. Activate this customer to add staff."}
+          </EmptyState>
+        )}
+      </Paper>
+      {adding && (
+        <TaskSheet
+          title="Add staff"
+          description={`Create access for someone at ${customer.name}.`}
+          onClose={() => setAdding(false)}
+        >
+          <StaffForm
+            onCancel={() => setAdding(false)}
+            onSaved={() => setAdding(false)}
+          />
+        </TaskSheet>
       )}
-    </Paper>
+    </Stack>
   );
 }
