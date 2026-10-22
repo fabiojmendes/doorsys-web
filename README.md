@@ -14,8 +14,8 @@ Errors remain visible in MUI alerts and field helper text; snackbars only confir
 - Customer workspaces separate staff from account details and link directly to
   their activity. Staff profiles focus on credentials, with PIN reveal/copy/reset
   controls and access management grouped separately.
-- Activity offers Today, Yesterday, and Last 7 days presets, local outcome filters,
-  and a filter sheet for dates, customer search, and devices. Draft filters only
+- Activity keeps Today, Yesterday, and Last 7 days presets on the page, with a
+  filter sheet for custom dates, customer search, devices, and outcomes. Draft filters only
   take effect when applied. API contracts and existing direct URLs are preserved.
 
 ## Development

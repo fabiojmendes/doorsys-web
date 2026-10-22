@@ -2,7 +2,6 @@ import TuneIcon from "@mui/icons-material/Tune";
 import {
   Alert,
   Autocomplete,
-  Box,
   Button,
   Chip,
   List,
@@ -11,11 +10,7 @@ import {
   Link as MuiLink,
   Paper,
   Stack,
-  Tab,
-  Tabs,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { useState } from "react";
@@ -81,7 +76,11 @@ export default function Logs({
   const current = new URLSearchParams(pendingSearch ?? search);
   const filters =
     pendingSearch === undefined ? loadedFilters : logFilters(current);
-  const outcome = current.get("outcome") || "all";
+  const requestedOutcome = current.get("outcome");
+  const outcome =
+    requestedOutcome === "denied" || requestedOutcome === "success"
+      ? requestedOutcome
+      : "all";
   function change(values: Record<string, string>) {
     const next = new URLSearchParams(current);
     if (!next.has("startDate")) next.set("startDate", filters.startDate);
@@ -108,12 +107,6 @@ export default function Logs({
     group.push(entry);
     grouped.set(date, group);
   }
-  const customerName =
-    customers.find((customer) => String(customer.id) === filters.customerId)
-      ?.name || `Customer ${filters.customerId}`;
-  const deviceExists = devices.some(
-    (device) => String(device.id) === filters.deviceId,
-  );
   const presets = [
     { key: "today", label: "Today" },
     { key: "yesterday", label: "Yesterday" },
@@ -159,58 +152,11 @@ export default function Logs({
           );
         })}
       </Stack>
-      <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
-        <Typography variant="caption" color="text.secondary">
-          {filters.startDate === filters.endDate
-            ? filters.startDate
-            : `${filters.startDate} – ${filters.endDate}`}
-        </Typography>
-        {filters.customerId && (
-          <Chip
-            size="small"
-            label={customerName}
-            onDelete={() => change({ customerId: "" })}
-          />
-        )}
-      </Stack>
-      <ToggleButtonGroup
-        exclusive
-        value={outcome}
-        size="small"
-        aria-label="Entry outcome"
-        onChange={(_, value: string | null) => {
-          if (value) change({ outcome: value === "all" ? "" : value });
-        }}
-      >
-        <ToggleButton value="all">All entries</ToggleButton>
-        <ToggleButton value="denied">Denied</ToggleButton>
-        <ToggleButton value="success">Successful</ToggleButton>
-      </ToggleButtonGroup>
-      <Box sx={{ minWidth: 0, maxWidth: "100%" }}>
-        <Tabs
-          value={filters.deviceId}
-          onChange={(_, id: string) => change({ deviceId: id })}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          aria-label="Filter by device"
-        >
-          <Tab label="All devices" value="" />
-          {filters.deviceId && !deviceExists && (
-            <Tab
-              label={`Device ${filters.deviceId}`}
-              value={filters.deviceId}
-            />
-          )}
-          {devices.map((device) => (
-            <Tab
-              key={device.id}
-              label={device.name}
-              value={String(device.id)}
-            />
-          ))}
-        </Tabs>
-      </Box>
+      <Typography variant="caption" color="text.secondary">
+        {filters.startDate === filters.endDate
+          ? filters.startDate
+          : `${filters.startDate} – ${filters.endDate}`}
+      </Typography>
       <Typography variant="caption" color="text.secondary" aria-live="polite">
         {visible.length} {visible.length === 1 ? "entry" : "entries"}
         {outcome === "denied"
@@ -264,11 +210,12 @@ export default function Logs({
       {filtering && (
         <TaskSheet
           title="Filter activity"
-          description="Choose a date range, customer, or device."
+          description="Choose dates, customer, device, and entry outcome."
           onClose={() => setFiltering(false)}
         >
           <LogFilterForm
             filters={filters}
+            outcome={outcome}
             customers={customers}
             devices={devices}
             onCancel={() => setFiltering(false)}
@@ -285,12 +232,14 @@ export default function Logs({
 
 function LogFilterForm({
   filters,
+  outcome,
   customers,
   devices,
   onCancel,
   onApply,
 }: {
   filters: ReturnType<typeof logFilters>;
+  outcome: string;
   customers: Customer[];
   devices: Device[];
   onCancel: () => void;
@@ -301,6 +250,7 @@ function LogFilterForm({
     endDate: filters.endDate,
     customerId: filters.customerId,
     deviceId: filters.deviceId,
+    outcome,
   });
   const [error, setError] = useState("");
   const selectedCustomer =
@@ -332,7 +282,10 @@ function LogFilterForm({
           setError("The end date must be on or after the start date.");
           return;
         }
-        onApply(draft);
+        onApply({
+          ...draft,
+          outcome: draft.outcome === "all" ? "" : draft.outcome,
+        });
       }}
     >
       {error && <Alert severity="error">{error}</Alert>}
@@ -391,6 +344,18 @@ function LogFilterForm({
             {device.name}
           </MenuItem>
         ))}
+      </TextField>
+      <TextField
+        select
+        label="Outcome"
+        value={draft.outcome}
+        onChange={(event) =>
+          setDraft({ ...draft, outcome: event.target.value })
+        }
+      >
+        <MenuItem value="all">All entries</MenuItem>
+        <MenuItem value="denied">Denied</MenuItem>
+        <MenuItem value="success">Successful</MenuItem>
       </TextField>
       <Stack direction="row" spacing={1} justifyContent="flex-end">
         <Button onClick={onCancel}>Cancel</Button>

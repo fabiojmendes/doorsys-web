@@ -28,7 +28,15 @@ import StaffPage, {
   clientAction as staffAction,
   clientLoader as staffLoader,
 } from "../app/routes/staff";
-import { button, click, fill, input, renderRouter, settle } from "./render";
+import {
+  button,
+  click,
+  fill,
+  input,
+  renderRouter,
+  selectOption,
+  settle,
+} from "./render";
 
 vi.mock("../app/lib/api", async (original) => ({
   ...(await original<typeof import("../app/lib/api")>()),
@@ -499,7 +507,10 @@ describe("log workflows", () => {
       ],
       "/logs?customerId=7",
     );
-    await click(button("Denied"));
+    await click(button("Filters"));
+    await selectOption("Outcome", "denied");
+    expect(router.state.location.search).not.toContain("outcome=denied");
+    await click(button("Apply filters"));
     await settle(() => router.state.location.search.includes("outcome=denied"));
     expect(router.state.location.search).toContain("customerId=7");
     expect(document.body.textContent).not.toContain("Successful entry");
@@ -543,7 +554,9 @@ describe("log workflows", () => {
     await fill(start, "2026-10-21");
     await click(button("Apply filters"));
     await settle(() => requests === 2);
-    await click(button("Front door"));
+    await click(button("Filters"));
+    await selectOption("Device", "2");
+    await click(button("Apply filters"));
     await settle(() => router.state.navigation.state === "idle");
     expect(router.state.location.search).toContain("startDate=2026-10-21");
     expect(router.state.location.search).toContain("deviceId=2");
@@ -606,7 +619,9 @@ describe("log workflows", () => {
         query: expect.objectContaining({ customerId: "7", deviceId: null }),
       }),
     );
-    await click(button("Front door"));
+    await click(button("Filters"));
+    await selectOption("Device", "2");
+    await click(button("Apply filters"));
     await settle(() => router.state.location.search.includes("deviceId=2"));
     expect(mockApi).toHaveBeenCalledWith(
       "/entry_logs",

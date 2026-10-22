@@ -81,7 +81,7 @@ export function TaskSheet({
         </IconButton>
       </Stack>
       <Box
-        sx={{ px: 3, pb: 3, overflowY: "auto" }}
+        sx={{ px: 3, pt: 1, pb: 3, overflowY: "auto" }}
         onChangeCapture={() => setDirty(true)}
       >
         {warn && (

@@ -98,3 +98,24 @@ export async function fill(element: HTMLInputElement, value: string) {
     element.dispatchEvent(new Event("change", { bubbles: true }));
   });
 }
+
+export async function selectOption(label: string, value: string) {
+  const fieldLabel = Array.from(document.querySelectorAll("label")).find(
+    (element) => element.textContent === label,
+  );
+  const control = fieldLabel?.htmlFor
+    ? document.getElementById(fieldLabel.htmlFor)
+    : null;
+  if (!control) throw new Error(`Select '${label}' not found`);
+  await act(async () => {
+    control.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 }),
+    );
+  });
+  const option = document.querySelector<HTMLElement>(
+    `[role="option"][data-value="${value}"]`,
+  );
+  if (!option) throw new Error(`Option '${value}' not found`);
+  await click(option);
+  await settle(() => !document.querySelector('[role="listbox"]'));
+}
