@@ -3,10 +3,16 @@ import {
   type ActionFunction,
   type LoaderFunction,
   useLoaderData,
+  useRouteError,
 } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { api } from "../app/lib/api";
-import { requireSession } from "../app/lib/auth";
+import { ErrorPage } from "../app/components/error-page";
+import { ApiError, api } from "../app/lib/api";
+import { getSession, signIn } from "../app/lib/auth";
+import {
+  AuthenticationRequiredError,
+  setAuthState,
+} from "../app/lib/auth-state";
 import App, { clientLoader as rootLoader } from "../app/root";
 import CustomerPage, {
   clientAction as customerAction,
@@ -44,6 +50,7 @@ vi.mock("../app/lib/api", async (original) => ({
 }));
 vi.mock("../app/lib/auth", () => ({
   requireSession: vi.fn(),
+  getSession: vi.fn(),
   signIn: vi.fn(),
   signOut: vi.fn(),
   accessToken: vi.fn(),
@@ -100,9 +107,7 @@ function LogsRoute() {
 }
 
 function RootRoute() {
-  return (
-    <App {...({ loaderData: useLoaderData() } as Parameters<typeof App>[0])} />
-  );
+  return <App />;
 }
 
 const customerRoutes = [
@@ -135,6 +140,15 @@ const staffRoutes = [
 ];
 
 beforeEach(() => {
+  setAuthState({
+    status: "authenticated",
+    user: { name: "Operator", picture: "https://example.com/avatar.png" },
+  });
+  vi.mocked(getSession).mockResolvedValue({
+    user: { name: "Operator" },
+  } as Awaited<ReturnType<typeof getSession>>);
+  vi.mocked(signIn).mockReset();
+  vi.mocked(signIn).mockResolvedValue(undefined);
   mockApi.mockReset();
   mockApi.mockImplementation(async (path, options) => {
     if (path === "/customers/7/staff") return [staff];
@@ -657,10 +671,10 @@ describe("log workflows", () => {
 
 describe("callback navigation", () => {
   it("restores the requested route before the home redirect can run", async () => {
-    vi.mocked(requireSession).mockResolvedValue({
+    vi.mocked(getSession).mockResolvedValue({
       user: { name: "Operator" },
       returnTo: "/staff/8",
-    } as Awaited<ReturnType<typeof requireSession>>);
+    } as Awaited<ReturnType<typeof getSession>>);
     const router = await renderRouter(
       [
         {
@@ -685,5 +699,112 @@ describe("callback navigation", () => {
       await router.navigate("/");
     });
     await settle(() => router.state.location.pathname === "/customers");
+  });
+});
+
+describe("authentication screens", () => {
+  function AuthErrorBoundary() {
+    return <ErrorPage error={useRouteError()} />;
+  }
+  const routes = [
+    {
+      path: "/",
+      Component: RootRoute,
+      loader: rootLoader as LoaderFunction,
+      ErrorBoundary: AuthErrorBoundary,
+      children: [
+        { index: true, Component: Home },
+        { path: "customers", element: <span>Private customer content</span> },
+        {
+          path: "logs",
+          loader: () => {
+            throw new AuthenticationRequiredError();
+          },
+          ErrorBoundary: AuthErrorBoundary,
+        },
+      ],
+    },
+  ];
+
+  function signedOut() {
+    vi.mocked(getSession).mockImplementation(async () => {
+      setAuthState({ status: "unauthenticated" });
+      return { user: undefined } as Awaited<ReturnType<typeof getSession>>;
+    });
+  }
+
+  it("shows one sign-in action without an avatar, navigation, or automatic redirects", async () => {
+    signedOut();
+    const router = await renderRouter(routes, "/logs?deviceId=2");
+    expect(document.body.textContent).toContain("You are not signed in");
+    expect(document.querySelectorAll("button")).toHaveLength(1);
+    expect(button("Sign in")).toBeDefined();
+    expect(document.querySelector(".MuiAvatar-root")).toBeNull();
+    expect(document.querySelector("nav")).toBeNull();
+    expect(router.state.location.pathname + router.state.location.search).toBe(
+      "/logs?deviceId=2",
+    );
+    expect(signIn).not.toHaveBeenCalled();
+    await click(button("Sign in"));
+    expect(signIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the signed-out home page stable instead of redirecting to customers", async () => {
+    signedOut();
+    const router = await renderRouter(routes, "/");
+    expect(router.state.location.pathname).toBe("/");
+    expect(document.body.textContent).toContain("You are not signed in");
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it("removes an existing avatar and private screen immediately when the session expires", async () => {
+    const router = await renderRouter(routes, "/customers");
+    expect(document.querySelector(".MuiAvatar-root")).not.toBeNull();
+    expect(document.body.textContent).toContain("Private customer content");
+    await act(async () => {
+      setAuthState({
+        status: "unauthenticated",
+        message: "Your session has expired. Sign in to continue.",
+      });
+    });
+    expect(document.querySelector(".MuiAvatar-root")).toBeNull();
+    expect(document.querySelector("nav")).toBeNull();
+    expect(document.body.textContent).not.toContain("Private customer content");
+    expect(document.querySelectorAll("button")).toHaveLength(1);
+    expect(document.body.textContent).toContain("Your session has expired");
+    expect(router.state.location.pathname).toBe("/customers");
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it("shows sign-in failures inline and keeps the same single recovery action", async () => {
+    signedOut();
+    vi.mocked(signIn).mockRejectedValueOnce(
+      new Error("Unable to connect to Auth0"),
+    );
+    await renderRouter(routes, "/");
+    await click(button("Sign in"));
+    expect(document.querySelector('[role="alert"]')?.textContent).toContain(
+      "Unable to connect to Auth0",
+    );
+    expect(document.querySelectorAll("button")).toHaveLength(1);
+    vi.mocked(signIn).mockResolvedValue(undefined);
+    await click(button("Sign in"));
+    expect(document.querySelector('[role="alert"]')).toBeNull();
+    expect(signIn).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    [new Error("Network unavailable"), "Try again"],
+    [new ApiError("Record not found", 404), "Customers"],
+    [new ApiError("Permission denied", 403), "Customers"],
+  ])("offers one relevant recovery action for a non-authentication error (%s)", async (error, action) => {
+    await renderRouter(
+      [{ path: "/", Component: () => <ErrorPage error={error} /> }],
+      "/",
+    );
+    const actions = document.querySelectorAll("button, a");
+    expect(actions).toHaveLength(1);
+    expect(actions[0].textContent).toBe(action);
+    expect(document.body.textContent).not.toContain("Sign in");
   });
 });

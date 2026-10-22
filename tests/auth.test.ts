@@ -53,12 +53,17 @@ describe("authentication", () => {
     );
   });
 
-  it("shares initialization and redirects unauthenticated users with their requested path", async () => {
+  it("clears cached profiles and only redirects after an explicit sign-in action", async () => {
     client.isAuthenticated.mockResolvedValue(false);
     const auth = await import("../app/lib/auth");
-    await expect(auth.requireSession("/logs?deviceId=2")).rejects.toThrow(
-      "Redirecting",
+    const state = await import("../app/lib/auth-state");
+    await expect(auth.requireSession()).rejects.toBeInstanceOf(
+      state.AuthenticationRequiredError,
     );
+    expect(state.getAuthState()).toEqual({ status: "unauthenticated" });
+    expect(client.getUser).not.toHaveBeenCalled();
+    expect(client.loginWithRedirect).not.toHaveBeenCalled();
+    await auth.signIn("/logs?deviceId=2");
     expect(client.loginWithRedirect).toHaveBeenCalledWith({
       appState: { returnTo: "/logs?deviceId=2" },
     });
@@ -69,10 +74,51 @@ describe("authentication", () => {
     window.history.replaceState(null, "", "/?error=access_denied&state=state");
     client.handleRedirectCallback.mockRejectedValue(new Error("Access denied"));
     const auth = await import("../app/lib/auth");
-    await expect(auth.getSession()).rejects.toThrow("Access denied");
+    const state = await import("../app/lib/auth-state");
+    expect((await auth.getSession()).user).toBeUndefined();
+    expect(state.getAuthState()).toMatchObject({
+      status: "unauthenticated",
+      message: expect.stringContaining("Access denied"),
+    });
+    expect(client.loginWithRedirect).not.toHaveBeenCalled();
     await auth.getSession();
     expect(client.handleRedirectCallback).toHaveBeenCalledTimes(1);
     expect(window.location.search).toBe("");
+  });
+
+  it.each([
+    "login_required",
+    "consent_required",
+    "interaction_required",
+    "missing_refresh_token",
+    "invalid_grant",
+  ])("clears a rejected session without redirecting (%s)", async (code) => {
+    const auth = await import("../app/lib/auth");
+    const state = await import("../app/lib/auth-state");
+    await auth.getSession();
+    expect(state.getAuthState().status).toBe("authenticated");
+    client.getTokenSilently.mockRejectedValue(
+      Object.assign(new Error("Login required"), { error: code }),
+    );
+    await expect(auth.accessToken()).rejects.toBeInstanceOf(
+      state.AuthenticationRequiredError,
+    );
+    expect(state.getAuthState()).toMatchObject({ status: "unauthenticated" });
+    // A stale SDK profile must not resurrect the avatar after token rejection.
+    expect((await auth.getSession()).user).toBeUndefined();
+    await expect(auth.requireSession()).rejects.toBeInstanceOf(
+      state.AuthenticationRequiredError,
+    );
+    expect(client.loginWithRedirect).not.toHaveBeenCalled();
+  });
+
+  it("keeps transient token failures retryable without clearing authentication", async () => {
+    const auth = await import("../app/lib/auth");
+    const state = await import("../app/lib/auth-state");
+    client.getTokenSilently.mockRejectedValue(new Error("Network unavailable"));
+    await expect(auth.accessToken()).rejects.toThrow("Network unavailable");
+    expect(state.getAuthState().status).toBe("authenticated");
+    expect(client.loginWithRedirect).not.toHaveBeenCalled();
   });
 
   it("rejects external redirect destinations and logs out to the origin", async () => {

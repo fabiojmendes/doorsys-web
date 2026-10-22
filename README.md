@@ -32,6 +32,9 @@ Set `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` in `.env`. Optionally set
 `VITE_AUTH0_CALLBACK_URL`; otherwise the callback is the browser origin.
 Configure the origin/callback and logout URL in Auth0, with API audience `doorsys-api`.
 The application preserves refresh tokens and local-storage token caching.
+Signed-out users see a single Sign in action; authentication starts only when
+they select it. Expired or rejected sessions clear the profile and navigation,
+and successful Auth0 sign-in restores the requested page.
 
 Vite proxies `/api/*` to `http://localhost:3000/*`. Run the existing Doorsys API
 there. The UI requires Auth0 and the real API; production has no authentication bypass.

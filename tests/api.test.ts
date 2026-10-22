@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, api } from "../app/lib/api";
-import { accessToken } from "../app/lib/auth";
+import { api } from "../app/lib/api";
+import { accessToken, invalidateSession } from "../app/lib/auth";
+import { AuthenticationRequiredError } from "../app/lib/auth-state";
 
-vi.mock("../app/lib/auth", () => ({ accessToken: vi.fn() }));
+vi.mock("../app/lib/auth", () => ({
+  accessToken: vi.fn(),
+  invalidateSession: vi.fn(),
+}));
 
 describe("API compatibility", () => {
   beforeEach(() => {
@@ -81,6 +85,11 @@ describe("API compatibility", () => {
       "fetch",
       vi.fn().mockResolvedValue(new Response(null, { status: 401 })),
     );
-    await expect(api("/customers")).rejects.toBeInstanceOf(ApiError);
+    await expect(api("/customers")).rejects.toBeInstanceOf(
+      AuthenticationRequiredError,
+    );
+    expect(invalidateSession).toHaveBeenCalledWith(
+      "Your session has expired. Sign in to continue.",
+    );
   });
 });

@@ -12,7 +12,9 @@ import type { Route } from "./+types/root";
 import { ErrorPage } from "./components/error-page";
 import { LoadingPage } from "./components/page";
 import { Shell } from "./components/shell";
-import { requireSession } from "./lib/auth";
+import { SignInPage } from "./components/sign-in-page";
+import { getSession } from "./lib/auth";
+import { useAuthState } from "./lib/auth-state";
 import { theme } from "./theme";
 
 export function meta() {
@@ -26,17 +28,14 @@ export function links() {
   return [{ rel: "icon", type: "image/png", href: "/favicon.png" }];
 }
 
-export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const url = new URL(request.url);
-  const session = await requireSession(
-    `${url.pathname}${url.search}${url.hash}`,
-  );
-  if (session.returnTo) {
+export async function clientLoader() {
+  const session = await getSession();
+  if (session.user && session.returnTo) {
     const returnTo = session.returnTo;
     session.returnTo = undefined;
     return replace(returnTo);
   }
-  return { user: session.user };
+  return null;
 }
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -67,9 +66,13 @@ export function HydrateFallback() {
   return <LoadingPage />;
 }
 
-export default function App({ loaderData }: Route.ComponentProps) {
+export default function App() {
+  const auth = useAuthState();
+  if (auth.status === "loading") return <LoadingPage />;
+  if (auth.status === "unauthenticated")
+    return <SignInPage message={auth.message} />;
   return (
-    <Shell user={loaderData.user}>
+    <Shell user={auth.user}>
       <Outlet />
     </Shell>
   );

@@ -1,4 +1,5 @@
-import { accessToken } from "./auth";
+import { accessToken, invalidateSession } from "./auth";
+import { AuthenticationRequiredError } from "./auth-state";
 
 export class ApiError extends Error {
   constructor(
@@ -52,6 +53,11 @@ export async function api<T>(
     }
   }
   if (!response.ok) {
+    if (response.status === 401) {
+      const message = "Your session has expired. Sign in to continue.";
+      invalidateSession(message);
+      throw new AuthenticationRequiredError(message);
+    }
     const message =
       typeof body === "object" &&
       body !== null &&
@@ -65,13 +71,11 @@ export async function api<T>(
           : "";
     throw new ApiError(
       message ||
-        (response.status === 401
-          ? "Your session has expired. Sign in again to continue."
-          : response.status === 403
-            ? "You do not have permission to perform this action."
-            : response.status === 404
-              ? "This record could not be found."
-              : "The request failed. Please try again."),
+        (response.status === 403
+          ? "You do not have permission to perform this action."
+          : response.status === 404
+            ? "This record could not be found."
+            : "The request failed. Please try again."),
       response.status,
     );
   }

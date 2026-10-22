@@ -27,13 +27,7 @@ import { FeedbackProvider } from "./feedback";
 
 export const AuthContext = createContext<User | undefined>(undefined);
 
-export function Shell({
-  user,
-  children,
-}: {
-  user: User | undefined;
-  children: ReactNode;
-}) {
+export function Shell({ user, children }: { user: User; children: ReactNode }) {
   const location = useLocation();
   const navigation = useNavigation();
   const [error, setError] = useState("");

@@ -3,6 +3,7 @@ import {
   createAuth0Client,
   type User,
 } from "@auth0/auth0-spa-js";
+import { AuthenticationRequiredError, setAuthState } from "./auth-state";
 
 interface Session {
   client: Auth0Client;
@@ -12,6 +13,28 @@ interface Session {
 
 let session: Promise<Session> | undefined;
 let login: Promise<void> | undefined;
+let invalidated = false;
+
+export function invalidateSession(message?: string) {
+  invalidated = true;
+  setAuthState({ status: "unauthenticated", message });
+}
+
+function requiresAuthentication(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "error" in error &&
+    [
+      "login_required",
+      "consent_required",
+      "interaction_required",
+      "missing_refresh_token",
+      "invalid_grant",
+      "mfa_required",
+    ].includes(String(error.error))
+  );
+}
 
 export function internalPath(value: unknown, fallback = "/customers"): string {
   if (typeof value !== "string" || !value.startsWith("/")) return fallback;
@@ -47,6 +70,12 @@ async function initialize(): Promise<Session> {
     try {
       const result = await client.handleRedirectCallback();
       returnTo = internalPath(result.appState?.returnTo);
+    } catch (error) {
+      invalidateSession(
+        error instanceof Error
+          ? `Sign-in was not completed: ${error.message}`
+          : "Sign-in was not completed. Please try again.",
+      );
     } finally {
       // Never leave one-time callback parameters in browser history.
       params.delete("code");
@@ -61,17 +90,23 @@ async function initialize(): Promise<Session> {
       );
     }
   }
-  return { client, user: await client.getUser(), returnTo };
+  return { client, user: undefined, returnTo };
 }
 
-export function getSession(): Promise<Session> {
+export async function getSession(): Promise<Session> {
   if (!session) {
     session = initialize().catch((error: unknown) => {
       session = undefined;
       throw error;
     });
   }
-  return session;
+  const result = await session;
+  const authenticated = !invalidated && (await result.client.isAuthenticated());
+  const user = authenticated ? await result.client.getUser() : undefined;
+  result.user = invalidated ? undefined : user;
+  if (result.user) setAuthState({ status: "authenticated", user: result.user });
+  else if (!invalidated) setAuthState({ status: "unauthenticated" });
+  return result;
 }
 
 export async function signIn(
@@ -88,23 +123,29 @@ export async function signIn(
   await login;
 }
 
-export async function requireSession(returnTo?: string): Promise<Session> {
+export async function requireSession(): Promise<Session> {
   const result = await getSession();
-  if (!(await result.client.isAuthenticated())) {
-    await signIn(returnTo);
-    throw new Error(
-      "Redirecting to sign in. If the page does not change, select Sign in to continue.",
-    );
-  }
+  if (!result.user) throw new AuthenticationRequiredError();
   return result;
 }
 
 export async function accessToken(): Promise<string> {
   const { client } = await requireSession();
-  return client.getTokenSilently();
+  try {
+    return await client.getTokenSilently();
+  } catch (error) {
+    if (requiresAuthentication(error)) {
+      invalidateSession("Your session has expired. Sign in to continue.");
+      throw new AuthenticationRequiredError(
+        "Your session has expired. Sign in to continue.",
+      );
+    }
+    throw error;
+  }
 }
 
 export async function signOut(): Promise<void> {
   const { client } = await getSession();
   await client.logout({ logoutParams: { returnTo: window.location.origin } });
+  invalidateSession();
 }

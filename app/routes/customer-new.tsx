@@ -10,7 +10,7 @@ import type { Customer, MutationResult } from "../lib/types";
 import type { Route } from "./+types/customer-new";
 
 export async function clientLoader() {
-  await requireSession("/customers/new");
+  await requireSession();
   return null;
 }
 
