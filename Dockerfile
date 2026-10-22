@@ -1,22 +1,18 @@
-FROM node:24-alpine AS development-dependencies-env
-COPY . /app
+FROM node:24-alpine AS build
 WORKDIR /app
+COPY package*.json ./
 RUN npm ci
-
-FROM node:24-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
-WORKDIR /app
-RUN npm ci --omit=dev
-
-FROM node:24-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
+COPY . .
+ARG VITE_AUTH0_DOMAIN
+ARG VITE_AUTH0_CLIENT_ID
+ARG VITE_AUTH0_CALLBACK_URL
 RUN npm run build
 
-FROM node:24-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
-WORKDIR /app
-CMD ["npm", "run", "start"]
+FROM caddy:builder AS caddy-builder
+RUN xcaddy build --with github.com/ggicci/caddy-jwt
+
+FROM caddy:alpine
+COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
+COPY --from=build /app/build/client /var/www/html
+COPY config/Caddyfile /etc/caddy/Caddyfile
+EXPOSE 80 443 443/udp
