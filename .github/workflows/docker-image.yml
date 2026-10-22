@@ -8,7 +8,22 @@ on:
     branches: ['master']
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
   build-push:
+    needs: validate
     runs-on: ubuntu-latest
 
     permissions:
@@ -16,7 +31,7 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Docker meta
         id: meta
@@ -45,3 +60,4 @@ jobs:
           build-args: |
             VITE_AUTH0_DOMAIN=${{ secrets.AUTH0_DOMAIN }}
             VITE_AUTH0_CLIENT_ID=${{ secrets.AUTH0_CLIENT_ID }}
+            VITE_AUTH0_CALLBACK_URL=${{ vars.AUTH0_CALLBACK_URL }}
