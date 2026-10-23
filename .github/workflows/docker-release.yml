@@ -2,7 +2,7 @@ name: Docker Image Release
 
 on:
   release:
-    types: [released] # Triggers exactly when Release Please creates a GitHub Release
+    types: [created] # Triggers exactly when Release Please creates a GitHub Release
 
 jobs:
   call-docker-release:
