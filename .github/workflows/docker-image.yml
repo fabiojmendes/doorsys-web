@@ -2,10 +2,10 @@ name: Docker Image CI
 
 on:
   push:
-    branches: ['master']
-    tags: ['v*']
+    branches: ["master"]
+    tags: ["v*"]
   pull_request:
-    branches: ['master']
+    branches: ["master"]
 
 jobs:
   validate:

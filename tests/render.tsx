@@ -26,12 +26,16 @@ afterEach(async () => {
   }
 });
 
+function HydrateFallback() {
+  return <span>Loading</span>;
+}
+
 export async function renderRouter(routes: RouteObject[], initial: string) {
   const container = document.createElement("div");
   document.body.append(container);
   const router = createMemoryRouter(
     routes.map((route) => ({
-      HydrateFallback: () => <span>Loading</span>,
+      HydrateFallback,
       ...route,
     })),
     { initialEntries: [initial] },
