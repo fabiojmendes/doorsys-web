@@ -103,7 +103,6 @@ to automate semantic versioning and changelog generation.
 Always use [Conventional Commits](https://www.conventionalcommits.org/) for
 commit messages so Release Please can properly detect changes, determine version
 bumps, and generate the changelog:
-
 - `fix: ...` triggers a **patch** bump (e.g., `0.2.2` $\rightarrow$ `0.2.3`)
 - `feat: ...` triggers a **minor** bump (e.g., `0.2.2` $\rightarrow$ `0.3.0`)
 - `feat!: ...` or commit body with `BREAKING CHANGE:` triggers a **major** bump
