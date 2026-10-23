@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/fabiojmendes/doorsys-web/compare/v0.4.3...v0.4.4) (2026-10-23)
+
+
+### Bug Fixes
+
+* release workflow ([a6498ea](https://github.com/fabiojmendes/doorsys-web/commit/a6498eaa9b6d7881c5e54e393e2281c803f09083))
+
 ## [0.4.3](https://github.com/fabiojmendes/doorsys-web/compare/v0.4.2...v0.4.3) (2026-10-23)
 
 
