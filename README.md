@@ -1,22 +1,25 @@
 # Doorsys
 
-Mobile-first administration for customers, staff access credentials, and entry logs.
-Built with React Router Framework SPA mode, TypeScript, Material UI, and Biome.
-Errors remain visible in MUI alerts and field helper text; snackbars only confirm success.
+Mobile-first administration for customers, staff access credentials, and entry
+logs. Built with React Router Framework SPA mode, TypeScript, Material UI, and
+Biome. Errors remain visible in MUI alerts and field helper text; snackbars only
+confirm success.
 
 ## Workflows
 
 - Search the customer directory by name or email, with explicit Active/Inactive
-  filters. Searches stay in the URL and filter the loaded list without extra API calls.
-- Create customers, edit details, and add staff in contextual sheets. Sheets open
-  from the bottom on phones and from the side on larger screens; changed forms
-  require an explicit cancel/discard before dismissal.
+  filters. Searches stay in the URL and filter the loaded list without extra API
+  calls.
+- Create customers, edit details, and add staff in contextual sheets. Sheets
+  open from the bottom on phones and from the side on larger screens; changed
+  forms require an explicit cancel/discard before dismissal.
 - Customer workspaces separate staff from account details and link directly to
-  their activity. Staff profiles focus on credentials, with PIN reveal/copy/reset
-  controls and access management grouped separately.
+  their activity. Staff profiles focus on credentials, with PIN
+  reveal/copy/reset controls and access management grouped separately.
 - Activity keeps Today, Yesterday, and Last 7 days presets on the page, with a
-  filter sheet for custom dates, customer search, devices, and outcomes. Draft filters only
-  take effect when applied. API contracts and existing direct URLs are preserved.
+  filter sheet for custom dates, customer search, devices, and outcomes. Draft
+  filters only take effect when applied. API contracts and existing direct URLs
+  are preserved.
 
 ## Development
 
@@ -30,14 +33,15 @@ npm run dev
 
 Set `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` in `.env`. Optionally set
 `VITE_AUTH0_CALLBACK_URL`; otherwise the callback is the browser origin.
-Configure the origin/callback and logout URL in Auth0, with API audience `doorsys-api`.
-The application preserves refresh tokens and local-storage token caching.
-Signed-out users see a single Sign in action; authentication starts only when
-they select it. Expired or rejected sessions clear the profile and navigation,
-and successful Auth0 sign-in restores the requested page.
+Configure the origin/callback and logout URL in Auth0, with API audience
+`doorsys-api`. The application preserves refresh tokens and local-storage token
+caching. Signed-out users see a single Sign in action; authentication starts
+only when they select it. Expired or rejected sessions clear the profile and
+navigation, and successful Auth0 sign-in restores the requested page.
 
 Vite proxies `/api/*` to `http://localhost:3000/*`. Run the existing Doorsys API
-there. The UI requires Auth0 and the real API; production has no authentication bypass.
+there. The UI requires Auth0 and the real API; production has no authentication
+bypass.
 
 ```sh
 npm run check       # Biome formatting, lint, and import checks; no writes
@@ -50,10 +54,11 @@ npm run build      # Static output in build/client
 npm run preview    # Preview the static build
 ```
 
-The preview server does not proxy the API; use `npm run dev` for local API-backed
-workflows, or serve the production build behind the Caddy configuration below.
-All routes keep their existing URLs. Customer and log filters live in URL search
-parameters; log date boundaries use the browser's local timezone.
+The preview server does not proxy the API; use `npm run dev` for local
+API-backed workflows, or serve the production build behind the Caddy
+configuration below. All routes keep their existing URLs. Customer and log
+filters live in URL search parameters; log date boundaries use the browser's
+local timezone.
 
 ## Docker and Caddy
 
@@ -65,12 +70,13 @@ docker build \
 ```
 
 Auth0 variables are public frontend configuration baked into the assets. Rebuild
-the image when they change; `VITE_AUTH0_CALLBACK_URL` is an optional build argument.
+the image when they change; `VITE_AUTH0_CALLBACK_URL` is an optional build
+argument.
 
-The final image contains Caddy with the JWT plugin and static assets, with no Node
-runtime. `config/Caddyfile` is a deployment template: replace the example hostname,
-Auth0 tenant, certificate paths, and backend address for your environment. Mount
-the configured Caddyfile and certificates at runtime:
+The final image contains Caddy with the JWT plugin and static assets, with no
+Node runtime. `config/Caddyfile` is a deployment template: replace the example
+hostname, Auth0 tenant, certificate paths, and backend address for your
+environment. Mount the configured Caddyfile and certificates at runtime:
 
 ```sh
 docker run --rm -p 80:80 -p 443:443 -p 443:443/udp \
@@ -79,19 +85,41 @@ docker run --rm -p 80:80 -p 443:443 -p 443:443/udp \
   doorsys-web
 ```
 
-Ensure the certificate paths in your Caddyfile match the mount and Caddy can reach
-the existing API backend. Caddy validates Auth0 JWTs for `/api/*`, strips `/api`,
-and proxies to the backend. Other paths fall back to `index.html` for direct links
-and browser refreshes. API failures must remain API responses, never SPA HTML.
+Ensure the certificate paths in your Caddyfile match the mount and Caddy can
+reach the existing API backend. Caddy validates Auth0 JWTs for `/api/*`, strips
+`/api`, and proxies to the backend. Other paths fall back to `index.html` for
+direct links and browser refreshes. API failures must remain API responses,
+never SPA HTML.
 
-CI runs Biome, type checks, tests, and a production build before building the image.
-Pull requests build without publishing; existing master/tag events publish to GHCR.
+CI runs Biome, type checks, tests, and a production build before building the
+image. Pull requests build without publishing; existing master/tag events
+publish to GHCR.
+
+## Releases
+
+This project uses [Release Please](https://github.com/googleapis/release-please)
+to automate semantic versioning and changelog generation.
+
+Always use [Conventional Commits](https://www.conventionalcommits.org/) for
+commit messages so Release Please can properly detect changes, determine version
+bumps, and generate the changelog:
+
+- `fix: ...` triggers a **patch** bump (e.g., `0.2.2` $\rightarrow$ `0.2.3`)
+- `feat: ...` triggers a **minor** bump (e.g., `0.2.2` $\rightarrow$ `0.3.0`)
+- `feat!: ...` or commit body with `BREAKING CHANGE:` triggers a **major** bump
+  (e.g., `0.2.2` $\rightarrow$ `1.0.0`)
+- Other prefixes like `chore:`, `docs:`, `refactor:`, `test:`, and `style:` do
+  not trigger version bumps on their own.
+
+When commits are pushed or merged to `master`, Release Please creates or updates
+a release pull request. Merging that pull request creates the GitHub release and
+tags the version.
 
 ## Migration validation
 
 Automated tests cover API contracts, Auth0 callback/session behavior, local-day
 log filters, customer forms, credential actions, and persistent error recovery.
-Before release, verify real Auth0 login/logout and the backend against a configured
-environment. Check Customers, customer details, staff details, and Logs at 320px,
-375px, and desktop widths, including long names/emails, keyboard navigation,
-confirmation dialogs, and bottom safe-area spacing.
+Before release, verify real Auth0 login/logout and the backend against a
+configured environment. Check Customers, customer details, staff details, and
+Logs at 320px, 375px, and desktop widths, including long names/emails, keyboard
+navigation, confirmation dialogs, and bottom safe-area spacing.
