@@ -13,7 +13,8 @@
       "!!node_modules",
       "!!coverage",
       "!!.agents",
-      "!!package-lock.json"
+      "!!package-lock.json",
+      "!!CHANGELOG.md"
     ]
   },
   "formatter": {
