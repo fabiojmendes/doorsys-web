@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/fabiojmendes/doorsys-web/compare/v0.3.0...v0.4.0) (2026-10-23)
+
+
+### Features
+
+* release test ([0d100e5](https://github.com/fabiojmendes/doorsys-web/commit/0d100e565adcab35760af0c78754b256863bee6e))
+
 ## [0.3.0](https://github.com/fabiojmendes/doorsys-web/compare/v0.2.2...v0.3.0) (2026-10-23)
 
 
