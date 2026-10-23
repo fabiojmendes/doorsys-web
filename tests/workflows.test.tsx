@@ -702,10 +702,11 @@ describe("callback navigation", () => {
   });
 });
 
+function AuthErrorBoundary() {
+  return <ErrorPage error={useRouteError()} />;
+}
+
 describe("authentication screens", () => {
-  function AuthErrorBoundary() {
-    return <ErrorPage error={useRouteError()} />;
-  }
   const routes = [
     {
       path: "/",
@@ -797,14 +798,17 @@ describe("authentication screens", () => {
     [new Error("Network unavailable"), "Try again"],
     [new ApiError("Record not found", 404), "Customers"],
     [new ApiError("Permission denied", 403), "Customers"],
-  ])("offers one relevant recovery action for a non-authentication error (%s)", async (error, action) => {
-    await renderRouter(
-      [{ path: "/", Component: () => <ErrorPage error={error} /> }],
-      "/",
-    );
-    const actions = document.querySelectorAll("button, a");
-    expect(actions).toHaveLength(1);
-    expect(actions[0].textContent).toBe(action);
-    expect(document.body.textContent).not.toContain("Sign in");
-  });
+  ])(
+    "offers one relevant recovery action for a non-authentication error (%s)",
+    async (error, action) => {
+      await renderRouter(
+        [{ path: "/", element: <ErrorPage error={error} /> }],
+        "/",
+      );
+      const actions = document.querySelectorAll("button, a");
+      expect(actions).toHaveLength(1);
+      expect(actions[0].textContent).toBe(action);
+      expect(document.body.textContent).not.toContain("Sign in");
+    },
+  );
 });

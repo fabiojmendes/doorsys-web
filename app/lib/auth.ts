@@ -132,7 +132,14 @@ export async function requireSession(): Promise<Session> {
 export async function accessToken(): Promise<string> {
   const { client } = await requireSession();
   try {
-    return await client.getTokenSilently();
+    const token = await client.getTokenSilently();
+    if (!token) {
+      invalidateSession("Your session has expired. Sign in to continue.");
+      throw new AuthenticationRequiredError(
+        "Your session has expired. Sign in to continue.",
+      );
+    }
+    return token;
   } catch (error) {
     if (requiresAuthentication(error)) {
       invalidateSession("Your session has expired. Sign in to continue.");
