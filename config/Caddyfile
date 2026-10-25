@@ -1,3 +1,4 @@
+# vim: ft=caddy
 {
 	log {
 		format console
