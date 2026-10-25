@@ -1,37 +1,16 @@
-name: Docker Image CI
+name: Build
 
 on:
   push:
-    branches: ["master"]
-  pull_request:
-    branches: ["master"]
-  workflow_call:
-    inputs:
-      tag:
-        description: "Release tag"
-        required: false
-        type: string
-        default: ""
+    branches-ignore: 
+      - "release-please-**"
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.tag || github.ref }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 26
-          cache: npm
-      - run: npm ci
-      - run: npm run check
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+  test:
+    uses: ./.github/workflows/test.yml
 
   build-push:
-    needs: validate
+    needs: test
     runs-on: ubuntu-latest
 
     permissions:
@@ -41,21 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch,enable=${{ inputs.tag == '' }}
-            type=ref,event=pr,enable=${{ inputs.tag == '' }}
-            type=semver,pattern={{version}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=semver,pattern={{major}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=raw,value=latest,enable=${{ inputs.tag != '' }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -70,6 +42,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
