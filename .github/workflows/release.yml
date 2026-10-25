@@ -1,37 +1,37 @@
-name: Docker Image CI
+name: Release
 
 on:
   push:
     branches: ["master"]
-  pull_request:
-    branches: ["master"]
-  workflow_call:
-    inputs:
-      tag:
-        description: "Release tag"
-        required: false
-        type: string
-        default: ""
 
 jobs:
-  validate:
+  release-please:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+
     steps:
-      - uses: actions/checkout@v7
+      - uses: googleapis/release-please-action@v5
+        id: release
         with:
-          ref: ${{ inputs.tag || github.ref }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 26
-          cache: npm
-      - run: npm ci
-      - run: npm run check
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+          release-type: node
+
+  test:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    uses: ./.github/workflows/test.yml
+    with:
+      ref: ${{ needs.release-please.outputs.tag_name }}
 
   build-push:
-    needs: validate
+    needs: test
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -41,21 +41,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ needs.release-please.outputs.tag_name }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch,enable=${{ inputs.tag == '' }}
-            type=ref,event=pr,enable=${{ inputs.tag == '' }}
-            type=semver,pattern={{version}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=semver,pattern={{major}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=raw,value=latest,enable=${{ inputs.tag != '' }}
+          context: git
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -70,6 +65,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
