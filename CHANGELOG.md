@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/fabiojmendes/doorsys-web/compare/v0.4.5...v0.4.6) (2026-10-25)
+
+
+### Bug Fixes
+
+* **workflow:** use inputs.ref to pick the right git ref ([ba2a40c](https://github.com/fabiojmendes/doorsys-web/commit/ba2a40c6845d9035bc47853b2f49a362c79efb2f))
+
 ## [0.4.5](https://github.com/fabiojmendes/doorsys-web/compare/v0.4.4...v0.4.5) (2026-10-25)
 
 
