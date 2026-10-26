@@ -1,4 +1,4 @@
-name: Build
+name: Continuous Integration
 
 on:
   push:
@@ -6,11 +6,24 @@ on:
       - "release-please-**"
 
 jobs:
-  test:
-    uses: ./.github/workflows/test.yml
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
 
   build-push:
-    needs: test
+    needs: check
     runs-on: ubuntu-latest
 
     permissions:
